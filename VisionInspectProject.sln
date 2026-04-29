@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.4.11626.88 stable
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InspectionProgram", "InspectionProgram\InspectionProgram.csproj", "{A7F3C89E-2B41-4D5E-9C02-1E8F4B6D7A30}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A7F3C89E-2B41-4D5E-9C02-1E8F4B6D7A30}.Debug|x64.ActiveCfg = Debug|x64
+		{A7F3C89E-2B41-4D5E-9C02-1E8F4B6D7A30}.Debug|x64.Build.0 = Debug|x64
+		{A7F3C89E-2B41-4D5E-9C02-1E8F4B6D7A30}.Release|x64.ActiveCfg = Release|x64
+		{A7F3C89E-2B41-4D5E-9C02-1E8F4B6D7A30}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3EA2F905-D4AA-4CFC-8C58-72256CE3C2D2}
+	EndGlobalSection
+EndGlobal
