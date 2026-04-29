@@ -74,6 +74,7 @@
   - `InspectionProgram/Camera/OpenCvWebcamFrameSource.cs`: OpenCV로 웹캠 프레임 제공
 
 ---
+<img width="3600" height="2400" alt="InspectionProgram_Flowchart_KO" src="https://github.com/user-attachments/assets/d80dae58-c0eb-463e-9d25-6a593d7bd492" />
 
 ## 3. 전체 실행 플로우(코드 기준)
 
