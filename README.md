@@ -21,6 +21,7 @@
 
 ## 0. 한 문장 요약
 `InspectionProgram`은 **Teaching(티칭)**에서 “검사 기준(ROI/임계값/NCC 모델)”을 만들고 저장한 뒤, **Auto Run(자동 실행)**에서 그 기준을 적용해 이미지(단일/폴더)를 검사하여 **OK/NG** 판정 및 **CSV/로그**를 저장하는 **WinForms 기반 비전 검사 프로그램**이다.
+<img width="424" height="840" alt="image" src="https://github.com/user-attachments/assets/a4495f3e-6a45-4750-8614-272104f6151e" />
 
 ---
 
