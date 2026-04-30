@@ -1,7 +1,21 @@
-# InspectionProgram 발표용 정리 (KO)
+<img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/13284adc-5dd2-4019-a4a4-0a9f1a5b7718" />
+<img width="1920" height="1032" alt="image" src="https://github.com/user-attachments/assets/cfc6dc79-6d63-449d-a90b-127f35486ab3" />
 
-대상: **발표자(전공자)**가 이해하고 설명할 수 있게 + **임원/매니저**가 이해하기 쉬운 언어로 구성  
-전제: 현재 환경에서 `halcon.dll` 등 HALCON 런타임 부재로 **실행 불가**, 따라서 **정적(코드) 분석 기반**으로 흐름을 정리함
+<img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/71d663ef-9dc7-4006-a887-0831ef0f3200" />
+
+패턴 검사
+<img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/1f8bf723-ea23-45a2-a754-295e940849da" />
+패턴 검사 저장
+<img width="1920" height="1032" alt="image" src="https://github.com/user-attachments/assets/b14321b5-69f5-4ab1-b803-5030627b4db1" />
+같은 이미지 불러옴 
+<img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/a5a315ba-bcb2-4eef-ae6e-9fa394fda3e8" />
+검사 시작 - 사이클
+<img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/94d37791-97cc-4635-a0d9-282ac1577f25" />
+
+카운트
+<img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/cdd643da-6a64-4cf5-a373-5661d4b103ef" />
+
+<img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/56ea5fe5-e38c-4c65-bff1-7b96ca8a71bc" />
 
 ---
 
