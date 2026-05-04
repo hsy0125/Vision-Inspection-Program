@@ -65,7 +65,11 @@ namespace InspectionProgram
                 if (ex.InnerException != null)
                     details += "\r\n\r\n--- InnerException ---\r\n" + ex.InnerException;
 
-                MessageBox.Show(details, "Inspection Program - Startup Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(
+                    details,
+                    LocalizationService.GetText("StartupErrorTitle", LanguageType.Kr),
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
         }
     }

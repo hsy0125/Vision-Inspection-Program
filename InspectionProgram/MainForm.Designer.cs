@@ -45,6 +45,7 @@
             this.flpHeaderCenter = new System.Windows.Forms.FlowLayoutPanel();
             this.lblTimeValue = new System.Windows.Forms.Label();
             this.flpHeaderRight = new System.Windows.Forms.FlowLayoutPanel();
+            this.cboLanguage = new System.Windows.Forms.ComboBox();
             this.pnlToolbar = new System.Windows.Forms.Panel();
             this.tlpToolbar = new System.Windows.Forms.TableLayoutPanel();
             this.tlpToolbarButtons = new System.Windows.Forms.TableLayoutPanel();
@@ -54,7 +55,6 @@
             this.btnMenu4 = new System.Windows.Forms.Button();
             this.btnMenu5 = new System.Windows.Forms.Button();
             this.pnlToolbarRight = new System.Windows.Forms.Panel();
-            this.cboLanguage = new System.Windows.Forms.ComboBox();
             this.pnlContentHost = new System.Windows.Forms.Panel();
             this.tlpRoot.SuspendLayout();
             this.pnlHeader.SuspendLayout();
@@ -195,6 +195,24 @@
             this.flpHeaderRight.TabIndex = 2;
             this.flpHeaderRight.WrapContents = false;
             // 
+            // cboLanguage
+            // 
+            this.cboLanguage.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboLanguage.FormattingEnabled = true;
+            this.cboLanguage.Items.AddRange(new object[] {
+            "Kr",
+            "En",
+            "Cn",
+            "Jp",
+            "Vn",
+            "In"});
+            this.cboLanguage.Location = new System.Drawing.Point(8, 12);
+            this.cboLanguage.Margin = new System.Windows.Forms.Padding(4, 2, 0, 0);
+            this.cboLanguage.Name = "cboLanguage";
+            this.cboLanguage.Size = new System.Drawing.Size(58, 20);
+            this.cboLanguage.TabIndex = 0;
+            this.cboLanguage.SelectedIndexChanged += new System.EventHandler(this.cboLanguage_SelectedIndexChanged);
+            // 
             // pnlToolbar
             // 
             this.pnlToolbar.Controls.Add(this.tlpToolbar);
@@ -305,24 +323,6 @@
             this.pnlToolbarRight.Name = "pnlToolbarRight";
             this.pnlToolbarRight.Size = new System.Drawing.Size(970, 96);
             this.pnlToolbarRight.TabIndex = 1;
-            // 
-            // cboLanguage
-            // 
-            this.cboLanguage.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cboLanguage.FormattingEnabled = true;
-            this.cboLanguage.Items.AddRange(new object[] {
-            "Kr",
-            "En",
-            "Cn",
-            "Jp",
-            "Vn",
-            "In"});
-            this.cboLanguage.Location = new System.Drawing.Point(8, 12);
-            this.cboLanguage.Margin = new System.Windows.Forms.Padding(4, 2, 0, 0);
-            this.cboLanguage.Name = "cboLanguage";
-            this.cboLanguage.Size = new System.Drawing.Size(58, 20);
-            this.cboLanguage.TabIndex = 0;
-            this.cboLanguage.SelectedIndexChanged += new System.EventHandler(this.cboLanguage_SelectedIndexChanged);
             // 
             // pnlContentHost
             // 

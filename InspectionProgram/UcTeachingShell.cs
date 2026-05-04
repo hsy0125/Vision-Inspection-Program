@@ -22,6 +22,7 @@ namespace InspectionProgram.GUI
         private IFrameSource _liveSource;
         private CancellationTokenSource _liveCts;
         private volatile bool _liveEnabled;
+        private int _liveFirstFrameApplied;
         private LanguageType _currentLanguage = LanguageType.Kr;
 
         private Panel _pnlNccTopInfo;
@@ -38,6 +39,8 @@ namespace InspectionProgram.GUI
         private TabPage _tabCount;
         private FlowLayoutPanel _flpPattern;
         private FlowLayoutPanel _flpCount;
+        private ToolTip _cameraTabToolTip;
+        private ToolStripMenuItem _miCameraIndexScan;
 
         public UcTeachingShell()
         {
@@ -104,6 +107,7 @@ namespace InspectionProgram.GUI
             });
 
             WireViewerToolbarStateRefresh();
+            WireRoiSnapshotInvalidationForPatternTeach();
 
             ApplyTheme();
             InitializeCamerasForDesign();
@@ -113,6 +117,7 @@ namespace InspectionProgram.GUI
             }
 
             ApplyLanguage(_currentLanguage);
+            WireCameraTabForTeachingHelp();
         }
 
         private string L(string key) => LocalizationService.GetText(key, _currentLanguage);
@@ -135,20 +140,18 @@ namespace InspectionProgram.GUI
                 if (btnToolFit != null) btnToolFit.Text = L("FitImage");
                 if (btnToolOvClr != null) btnToolOvClr.Text = L("OverlayClear");
                 if (btnToolCross != null) btnToolCross.Text = L("Cross");
-                if (btnToolGray != null) btnToolGray.Text = L("Gray");
-                if (btnToolAvg != null) btnToolAvg.Text = L("Average");
-                if (btnToolSync != null) btnToolSync.Text = L("SyncShort");
                 if (btnToolMap != null) btnToolMap.Text = L("MapShort");
                 if (btnAddRoiRect != null) btnAddRoiRect.Text = L("RoiAdd");
                 if (btnDrawString != null) btnDrawString.Text = L("RoiSave");
 
                 if (ucInspectFlowStrip1 != null) ucInspectFlowStrip1.ApplyLanguage(language);
 
-                if (lblNccHeader != null) lblNccHeader.Text = "패턴 매칭 (NCC)";
-                if (btnNccSaveModel != null) btnNccSaveModel.Text = "모델 저장";
-                if (btnNccRunInspect != null) btnNccRunInspect.Text = "패턴 검사";
-                if (btnNccCount != null) btnNccCount.Text = "카운트";
-                if (btnSaveInspectionRecipe != null) btnSaveInspectionRecipe.Text = "검사 레시피 저장";
+                if (lblNccHeader != null) lblNccHeader.Text = L("NccPanelTitle");
+                if (btnNccSaveModel != null) btnNccSaveModel.Text = L("ModelSave");
+                if (btnNccRunInspect != null) btnNccRunInspect.Text = L("PatternInspect");
+                if (btnNccCount != null) btnNccCount.Text = L("NccCount");
+                if (btnSaveInspectionRecipe != null) btnSaveInspectionRecipe.Text = L("SaveInspectionRecipe");
+                if (btnBlobCount != null) btnBlobCount.Text = L("BlobCountRun");
 
                 if (lblNccMinTitle != null) lblNccMinTitle.Text = L("NccMinScore");
                 if (lblNccCountMinTitle != null) lblNccCountMinTitle.Text = L("NccCountMin");
@@ -157,9 +160,22 @@ namespace InspectionProgram.GUI
 
                 if (lblMinAreaTitle != null) lblMinAreaTitle.Text = L("MinArea");
                 if (lblExpectedTitle != null) lblExpectedTitle.Text = L("Expected");
-                if (lblFgPixelRangeTitle != null) lblFgPixelRangeTitle.Text = "ROI 전경 픽셀 범위";
-                if (_tabPattern != null) _tabPattern.Text = "패턴";
-                if (_tabCount != null) _tabCount.Text = "개수";
+                if (lblFgPixelRangeTitle != null) lblFgPixelRangeTitle.Text = L("RoiForegroundPixelRange");
+                if (lblFgPixelRangeSep != null) lblFgPixelRangeSep.Text = L("RangeSep");
+                if (_tabPattern != null) _tabPattern.Text = L("PatternTab");
+                if (_tabCount != null) _tabCount.Text = L("CountTab");
+
+                for (int i = 0; i < tabCamera.TabPages.Count; i++)
+                {
+                    tabCamera.TabPages[i].Text =
+                        L("Camera") + " " + (i + 1).ToString("00", CultureInfo.InvariantCulture);
+                }
+
+                RefreshCameraTabHints();
+                if (_miCameraIndexScan != null)
+                    _miCameraIndexScan.Text = L("CameraIndexScanMenu");
+
+                _blobFlow?.SetUiLanguage(language);
             }
             catch
             {
@@ -178,7 +194,7 @@ namespace InspectionProgram.GUI
                 Margin = new Padding(0),
             };
         }
-
+            
         private void BuildRightTabs()
         {
             try
@@ -190,8 +206,8 @@ namespace InspectionProgram.GUI
                 {
                     Dock = DockStyle.Fill,
                 };
-                _tabPattern = new TabPage("패턴");
-                _tabCount = new TabPage("개수");
+                _tabPattern = new TabPage(LocalizationService.GetText("PatternTab", _currentLanguage));
+                _tabCount = new TabPage(LocalizationService.GetText("CountTab", _currentLanguage));
                 _flpPattern = CreateRightStackPanel();
                 _flpCount = CreateRightStackPanel();
                 _tabPattern.Controls.Add(_flpPattern);
@@ -421,11 +437,81 @@ namespace InspectionProgram.GUI
             }
         }
 
+        /// <summary>
+        /// 뷰어 «지우기»: 이미지·ROI·세션 검사 결과와 함께 NCC/레시피 메모리·티칭 옵션을 초기화해
+        /// 패턴(NCC)과 개수(Blob) 흐름이 이전 세션에 묶이지 않게 합니다.
+        /// </summary>
+        private void ApplyTeachingFullViewerReset()
+        {
+            ClearTeachingNccSummaryUi();
+            NccSharedModelState.ResetSession();
+            TeachingInspectionRecipeStore.Clear();
+            _lastNccModelPath = string.Empty;
+            _nccTrackModelPath = string.Empty;
+            _lastNccTemplateW = 0.0;
+            _lastNccTemplateH = 0.0;
+
+            if (numExpected != null)
+                numExpected.Value = 0;
+            if (numFgPixelMin != null)
+                numFgPixelMin.Value = 0;
+            if (numFgPixelMax != null)
+                numFgPixelMax.Value = 0;
+            if (nudNccMinScore != null)
+                nudNccMinScore.Value = 0.75M;
+            if (nudNccCountJudgeMin != null)
+                nudNccCountJudgeMin.Value = 0.80M;
+            if (trkNccCountMin != null)
+                trkNccCountMin.Value = 50;
+            if (trkNccCountMax != null)
+                trkNccCountMax.Value = 100;
+            if (trkMinArea != null)
+                trkMinArea.Value = 20;
+            if (ucInspectFlowStrip1?.TrkThreshold != null)
+            {
+                ucInspectFlowStrip1.TrkThreshold.Value = 128;
+                if (ucInspectFlowStrip1.LblThresholdValue != null)
+                    ucInspectFlowStrip1.LblThresholdValue.Text = "128";
+            }
+
+            if (_blobFlow != null)
+            {
+                _blobFlow.CancelAutoBatchIfAny();
+                _blobFlow.ResetInspectionParametersToDefaults();
+            }
+
+            DemoOptions_Changed(null, EventArgs.Empty);
+            UpdateNccCountTrackLabels();
+
+            if (_blobFlow != null)
+            {
+                _viewer.ClearDisplay();
+                _blobFlow.ClearSessionAndFolder();
+                _blobFlow.ApplyFlowControlStates();
+            }
+            else
+            {
+                _viewer.ClearDisplay();
+            }
+        }
+
         private void OnTeachingShellDisposed()
         {
             try
             {
                 StopLiveInternal();
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                if (_cameraTabToolTip != null)
+                {
+                    _cameraTabToolTip.Dispose();
+                    _cameraTabToolTip = null;
+                }
             }
             catch
             {
@@ -474,89 +560,97 @@ namespace InspectionProgram.GUI
                 if (r == null || r.Count <= 0)
                     return "결과 없음";
 
-                double row = r.Row[0].D;
-                double col = r.Column[0].D;
-                double angle = r.Angle[0].D;
-
-                if (NccSharedModelState.TryGet(
-                        out string sharedModel,
-                        out double _stw,
-                        out double _sth,
-                        out double _sms,
-                        out bool hasRefPose,
-                        out double refRow,
-                        out double refCol,
-                        out double refAngle)
-                    && hasRefPose
-                    && NccSharedModelState.AlignImagesEnabled
-                    && string.Equals(Path.GetFullPath(model), Path.GetFullPath(sharedModel), StringComparison.OrdinalIgnoreCase))
+                NccSharedModelState.BeginProgrammaticRoiUpdate();
+                try
                 {
-                    Bitmap aligned = NccImageAlignment.AlignImageFileToReferenceBitmap(
-                        imagePath,
-                        sharedModel,
-                        _stw,
-                        _sth,
-                        row,
-                        col,
-                        angle,
-                        refRow,
-                        refCol,
-                        refAngle,
-                        out Exception alignEx);
-                    if (aligned != null && alignEx == null)
+                    double row = r.Row[0].D;
+                    double col = r.Column[0].D;
+                    double angle = r.Angle[0].D;
+
+                    if (NccSharedModelState.TryGet(
+                            out string sharedModel,
+                            out double _stw,
+                            out double _sth,
+                            out double _sms,
+                            out bool hasRefPose,
+                            out double refRow,
+                            out double refCol,
+                            out double refAngle)
+                        && hasRefPose
+                        && NccSharedModelState.AlignImagesEnabled
+                        && string.Equals(Path.GetFullPath(model), Path.GetFullPath(sharedModel), StringComparison.OrdinalIgnoreCase))
                     {
-                        _viewer.CanvasControl.SetImage(aligned, imagePath);
-                        row = refRow;
-                        col = refCol;
+                        Bitmap aligned = NccImageAlignment.AlignImageFileToReferenceBitmap(
+                            imagePath,
+                            sharedModel,
+                            _stw,
+                            _sth,
+                            row,
+                            col,
+                            angle,
+                            refRow,
+                            refCol,
+                            refAngle,
+                            out Exception alignEx);
+                        if (aligned != null && alignEx == null)
+                        {
+                            _viewer.CanvasControl.SetImage(aligned, imagePath);
+                            row = refRow;
+                            col = refCol;
+                        }
                     }
+
+                    ROI_Manager roi = _viewer.CanvasControl.SelectedRoi;
+                    if (roi == null && _viewer.CanvasControl.ROIItems != null && _viewer.CanvasControl.ROIItems.Count > 0)
+                        roi = _viewer.CanvasControl.ROIItems[0];
+
+                    // ROI가 없으면 하나 만든 뒤, 매칭 중심으로 이동
+                    if (roi == null)
+                    {
+                        Size sz = _viewer.CanvasControl.ImagePixelSize;
+                        int w = (int)Math.Round(tW > 0.1 ? tW : Math.Max(50, sz.Width * 0.25));
+                        int h = (int)Math.Round(tH > 0.1 ? tH : Math.Max(50, sz.Height * 0.25));
+                        int left = Math.Max(0, (int)Math.Round(col - (w / 2.0)));
+                        int top = Math.Max(0, (int)Math.Round(row - (h / 2.0)));
+                        var rect = new ROIRectangle(new Rectangle(left, top, w, h), Color.LimeGreen, 2);
+                        _viewer.CanvasControl.AddROI(rect);
+                        _viewer.CanvasControl.SelectROIByName(rect.Name);
+                        roi = rect;
+                    }
+
+                    if (roi is ROIRectangle rr)
+                    {
+                        Rectangle b0 = rr.GetBounds();
+                        int w0 = b0.Width;
+                        int h0 = b0.Height;
+                        int w = (int)Math.Round(tW > 0.1 ? tW : w0);
+                        int h = (int)Math.Round(tH > 0.1 ? tH : h0);
+                        w = Math.Max(4, w);
+                        h = Math.Max(4, h);
+                        int left = Math.Max(0, (int)Math.Round(col - (w / 2.0)));
+                        int top = Math.Max(0, (int)Math.Round(row - (h / 2.0)));
+                        rr.Rect = new Rectangle(left, top, w, h);
+                        _viewer.CanvasControl.SelectROIByName(rr.Name);
+                    }
+                    else
+                    {
+                        Rectangle b = roi.GetBounds();
+                        double cx = b.Left + (b.Width / 2.0);
+                        double cy = b.Top + (b.Height / 2.0);
+                        int dx = (int)Math.Round(col - cx);
+                        int dy = (int)Math.Round(row - cy);
+                        if (dx != 0 || dy != 0)
+                            roi.Move(dx, dy);
+                        _viewer.CanvasControl.SelectROIByName(roi.Name);
+                    }
+
+                    _viewer.CanvasControl.Invalidate();
+                    return null;
                 }
-
-                ROI_Manager roi = _viewer.CanvasControl.SelectedRoi;
-                if (roi == null && _viewer.CanvasControl.ROIItems != null && _viewer.CanvasControl.ROIItems.Count > 0)
-                    roi = _viewer.CanvasControl.ROIItems[0];
-
-                // ROI가 없으면 하나 만든 뒤, 매칭 중심으로 이동
-                if (roi == null)
+                finally
                 {
-                    Size sz = _viewer.CanvasControl.ImagePixelSize;
-                    int w = (int)Math.Round(tW > 0.1 ? tW : Math.Max(50, sz.Width * 0.25));
-                    int h = (int)Math.Round(tH > 0.1 ? tH : Math.Max(50, sz.Height * 0.25));
-                    int left = Math.Max(0, (int)Math.Round(col - (w / 2.0)));
-                    int top = Math.Max(0, (int)Math.Round(row - (h / 2.0)));
-                    var rect = new ROIRectangle(new Rectangle(left, top, w, h), Color.LimeGreen, 2);
-                    _viewer.CanvasControl.AddROI(rect);
-                    _viewer.CanvasControl.SelectROIByName(rect.Name);
-                    roi = rect;
+                    NccSharedModelState.EndProgrammaticRoiUpdate();
                 }
-
-                if (roi is ROIRectangle rr)
-                {
-                    Rectangle b0 = rr.GetBounds();
-                    int w0 = b0.Width;
-                    int h0 = b0.Height;
-                    int w = (int)Math.Round(tW > 0.1 ? tW : w0);
-                    int h = (int)Math.Round(tH > 0.1 ? tH : h0);
-                    w = Math.Max(4, w);
-                    h = Math.Max(4, h);
-                    int left = Math.Max(0, (int)Math.Round(col - (w / 2.0)));
-                    int top = Math.Max(0, (int)Math.Round(row - (h / 2.0)));
-                    rr.Rect = new Rectangle(left, top, w, h);
-                    _viewer.CanvasControl.SelectROIByName(rr.Name);
-                }
-                else
-                {
-                    Rectangle b = roi.GetBounds();
-                    double cx = b.Left + (b.Width / 2.0);
-                    double cy = b.Top + (b.Height / 2.0);
-                    int dx = (int)Math.Round(col - cx);
-                    int dy = (int)Math.Round(row - cy);
-                    if (dx != 0 || dy != 0)
-                        roi.Move(dx, dy);
-                    _viewer.CanvasControl.SelectROIByName(roi.Name);
-                }
-
-                _viewer.CanvasControl.Invalidate();
-                return null;
             }
             catch
             {
@@ -730,19 +824,36 @@ namespace InspectionProgram.GUI
         {
             AppExceptionHandler.ExecuteBestEffort("UcTeachingShell.InitializeCamerasForDesign", () =>
             {
-                if (tabCamera.TabPages.Count > 0)
+                if (tabCamera.TabPages.Count >= 4)
                     return;
 
-                tabCamera.TabPages.Add(new TabPage("CAM 01"));
-                tabCamera.TabPages.Add(new TabPage("CAM 02"));
-                tabCamera.TabPages.Add(new TabPage("CAM 03"));
-                tabCamera.TabPages.Add(new TabPage("CAM 04"));
+                for (int c = tabCamera.TabPages.Count + 1; c <= 4; c++)
+                {
+                    tabCamera.TabPages.Add(
+                        new TabPage(
+                            LocalizationService.GetText("Camera", _currentLanguage) + " " + c.ToString("00", CultureInfo.InvariantCulture)));
+                }
             });
         }
 
       
 
         // Live 버튼은 MainForm의 Menu1에서 실행
+
+        /// <summary>하단 카메라 탭 선택 인덱스 = OpenCV 장치 인덱스(번호 검사와 동일 규칙).</summary>
+        private int GetLiveOpenCvDeviceIndex()
+        {
+            try
+            {
+                if (tabCamera != null && tabCamera.SelectedIndex >= 0)
+                    return tabCamera.SelectedIndex;
+            }
+            catch
+            {
+            }
+
+            return 0;
+        }
 
         private void StartLive()
         {
@@ -753,13 +864,40 @@ namespace InspectionProgram.GUI
                 return;
 
             _liveEnabled = true;
+            Interlocked.Exchange(ref _liveFirstFrameApplied, 0);
 
             _liveCts = new CancellationTokenSource();
-            _liveSource = new OpenCvWebcamFrameSource(deviceIndex: 0, targetFps: 30);
 
-            txtTeachingLog.AppendText(DateTime.Now.ToString("HH:mm:ss") + " Live: 웹캠 스트리밍 시작" + Environment.NewLine);
+            int devIdx = GetLiveOpenCvDeviceIndex();
+            _liveSource = new OpenCvWebcamFrameSource(
+                deviceIndex: devIdx,
+                targetFps: 30,
+                diagnostic: msg =>
+                    AppExceptionHandler.ExecuteBestEffort("UcTeachingShell.LiveDiag", () =>
+                    {
+                        if (IsDisposed || !_liveEnabled)
+                            return;
+                        TryAppendTeachingLogLine(msg);
+                    }));
 
-            // Fire-and-forget. 예외는 내부에서 UI 로그로 남깁니다.
+            txtTeachingLog.AppendText(
+                DateTime.Now.ToString("HH:mm:ss")
+                + " Live: 웹캠 스트리밍 시작 (OpenCV 인덱스 "
+                + devIdx.ToString(CultureInfo.InvariantCulture)
+                + " = 선택된 카메라 탭)"
+                + Environment.NewLine);
+
+            try
+            {
+                if (!IsHandleCreated)
+                    CreateControl();
+                _viewer?.CreateControl();
+                _viewer?.CanvasControl?.CreateControl();
+            }
+            catch
+            {
+            }
+
             _ = RunLiveLoopAsync(_liveSource, _liveCts.Token);
         }
 
@@ -784,41 +922,114 @@ namespace InspectionProgram.GUI
             txtTeachingLog.AppendText(DateTime.Now.ToString("HH:mm:ss") + " Live: 중지" + Environment.NewLine);
         }
 
+        private void TryAppendTeachingLogLine(string message)
+        {
+            if (IsDisposed || string.IsNullOrEmpty(message))
+                return;
+            string line = DateTime.Now.ToString("HH:mm:ss") + " " + message + Environment.NewLine;
+            try
+            {
+                if (InvokeRequired)
+                    BeginInvoke((MethodInvoker)(() => { try { txtTeachingLog.AppendText(line); } catch { } }));
+                else
+                    txtTeachingLog.AppendText(line);
+            }
+            catch
+            {
+            }
+        }
+
         private async Task RunLiveLoopAsync(IFrameSource source, CancellationToken token)
         {
             try
             {
                 await source.StartAsync(frame =>
                 {
-                    // frame는 source에서 생성한 Bitmap. UI에서 사용 후 Dispose 필요.
                     if (IsDisposed || _viewer?.CanvasControl == null || _liveEnabled == false)
                     {
                         frame.Dispose();
                         return;
                     }
 
+                    void ApplyFrame()
+                    {
+                        if (IsDisposed || _viewer?.CanvasControl == null || !_liveEnabled)
+                        {
+                            try { frame.Dispose(); } catch { }
+                            return;
+                        }
+
+                        int fw = 0;
+                        int fh = 0;
+                        Bitmap uiCopy = null;
+                        try
+                        {
+                            fw = frame.Width;
+                            fh = frame.Height;
+                            uiCopy = (Bitmap)frame.Clone();
+                        }
+                        catch (Exception cex)
+                        {
+                            try { frame.Dispose(); } catch { }
+                            TryAppendTeachingLogLine("Live: Bitmap.Clone 실패 " + cex.Message);
+                            return;
+                        }
+
+                        try
+                        {
+                            frame.Dispose();
+                        }
+                        catch
+                        {
+                        }
+
+                        try
+                        {
+                            _viewer.CanvasControl.UpdateImageFrame(uiCopy);
+                            uiCopy = null;
+                            if (Interlocked.CompareExchange(ref _liveFirstFrameApplied, 1, 0) == 0)
+                            {
+                                _viewer.CanvasControl.FitToWindow();
+                                try
+                                {
+                                    _viewer.CanvasControl.Invalidate(true);
+                                    _viewer.Invalidate(true);
+                                    pnlViewerHost?.Invalidate(true);
+                                }
+                                catch
+                                {
+                                }
+
+                                TryAppendTeachingLogLine(
+                                    "Live: 뷰어 첫 프레임 "
+                                    + fw.ToString(CultureInfo.InvariantCulture) + "x"
+                                    + fh.ToString(CultureInfo.InvariantCulture));
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            try { uiCopy?.Dispose(); } catch { }
+                            TryAppendTeachingLogLine("Live: 뷰어 갱신 실패 " + ex.Message);
+                        }
+                    }
+
                     try
                     {
-                        if (_viewer.CanvasControl.InvokeRequired)
-                        {
-                            _viewer.CanvasControl.BeginInvoke((MethodInvoker)(() =>
-                            {
-                                // UpdateImageFrame이 내부에서 이전 프레임을 Dispose하므로,
-                                // 여기서 frame을 Dispose하면 캔버스가 사용하는 이미지가 바로 폐기됩니다.
-                                _viewer.CanvasControl.UpdateImageFrame(frame);
-                            }));
-                        }
+                        if (InvokeRequired)
+                            BeginInvoke((MethodInvoker)ApplyFrame);
                         else
-                        {
-                            _viewer.CanvasControl.UpdateImageFrame(frame);
-                        }
+                            ApplyFrame();
                     }
                     catch
                     {
-                        // UI 반영에 실패하면 누수 방지를 위해 Dispose
                         try { frame.Dispose(); } catch { }
                     }
                 }, token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                // 사용자 중지 또는 토큰 취소 — 지연된 UI 콜백이 다음 Live 세션을 건드리지 않게 별도 처리
+                return;
             }
             catch (Exception ex)
             {
@@ -828,6 +1039,10 @@ namespace InspectionProgram.GUI
                 {
                     BeginInvoke((MethodInvoker)(() =>
                     {
+                        // 이전 세션의 실패 처리가 BeginInvoke 지연으로 나중에 실행되면,
+                        // 이미 새 Live가 시작된 상태에서 StopLiveInternal이 새 소스를 끊는 레이스를 막음
+                        if (!ReferenceEquals(_liveSource, source))
+                            return;
                         txtTeachingLog.AppendText(DateTime.Now.ToString("HH:mm:ss") + " Live 오류: " + ex.Message + Environment.NewLine);
                         StopLiveInternal();
                     }));
@@ -910,19 +1125,7 @@ namespace InspectionProgram.GUI
                         _viewer.SaveImageFromDialog();
                         break;
                     case "CLEAR":
-                        ClearTeachingNccSummaryUi();
-                        if (_blobFlow != null)
-                        {
-                            _blobFlow.CancelAutoBatchIfAny();
-                            _viewer.ClearDisplay();
-                            _blobFlow.ClearSessionAndFolder();
-                            _blobFlow.ApplyFlowControlStates();
-                        }
-                        else
-                        {
-                            _viewer.ClearDisplay();
-                        }
-
+                        ApplyTeachingFullViewerReset();
                         break;
                     case "Z+":
                         _viewer.ZoomIn();
@@ -974,6 +1177,18 @@ namespace InspectionProgram.GUI
                 ViewSyncManager.SyncEnabledChanged += (_, __) =>
                     ViewerShellToolbarExtras.RefreshToggleButtonColors(_viewer, flpViewerToolbar);
                 ViewerShellToolbarExtras.RefreshToggleButtonColors(_viewer, flpViewerToolbar);
+            });
+        }
+
+        private void WireRoiSnapshotInvalidationForPatternTeach()
+        {
+            AppExceptionHandler.ExecuteBestEffort("UcTeachingShell.WireRoiSnapshot", () =>
+            {
+                if (_viewer == null)
+                    return;
+                _viewer.RoiCollectionChanged += (_, __) =>
+                    AppExceptionHandler.ExecuteBestEffort("UcTeachingShell.RoiInv", () =>
+                        NccSharedModelState.NotifyUserRoiCollectionChangedMayInvalidatePatternSnapshot());
             });
         }
 
@@ -1144,6 +1359,92 @@ namespace InspectionProgram.GUI
                             + Environment.NewLine);
                     }
                 });
+            });
+        }
+
+        private void WireCameraTabForTeachingHelp()
+        {
+            if (tabCamera == null)
+                return;
+
+            _cameraTabToolTip = new ToolTip
+            {
+                AutoPopDelay = 25000,
+                InitialDelay = 400,
+                ReshowDelay = 200,
+                ShowAlways = true,
+            };
+
+            var cms = new ContextMenuStrip();
+            _miCameraIndexScan = new ToolStripMenuItem(L("CameraIndexScanMenu"));
+            _miCameraIndexScan.Click += (_, __) =>
+                AppExceptionHandler.ExecuteBestEffort("UcTeachingShell.CameraIndexScan", RunCameraIndexScanToLog);
+            cms.Items.Add(_miCameraIndexScan);
+            tabCamera.ContextMenuStrip = cms;
+            RefreshCameraTabHints();
+        }
+
+        private void RefreshCameraTabHints()
+        {
+            if (_cameraTabToolTip == null || tabCamera?.TabPages == null)
+                return;
+            for (int i = 0; i < tabCamera.TabPages.Count; i++)
+            {
+                TabPage tp = tabCamera.TabPages[i];
+                _cameraTabToolTip.SetToolTip(tp, string.Format(L("CameraTabTooltipFmt"), i));
+            }
+        }
+
+        private void RunCameraIndexScanToLog()
+        {
+            if (_liveEnabled)
+            {
+                try
+                {
+                    txtTeachingLog.AppendText(
+                        DateTime.Now.ToString("HH:mm:ss") + " " + L("CameraIndexScanNeedStopLive") + Environment.NewLine);
+                }
+                catch
+                {
+                }
+                return;
+            }
+
+            try
+            {
+                txtTeachingLog.AppendText(
+                    DateTime.Now.ToString("HH:mm:ss") + " " + L("CameraIndexScanRunning") + Environment.NewLine);
+            }
+            catch
+            {
+            }
+
+            _ = Task.Run(() =>
+            {
+                string report = WebcamIndexScanner.BuildScanLog(8, 30);
+                try
+                {
+                    BeginInvoke((MethodInvoker)(() =>
+                    {
+                        try
+                        {
+                            foreach (string line in report.Split(
+                                new[] { "\r\n", "\n" },
+                                StringSplitOptions.None))
+                            {
+                                if (string.IsNullOrWhiteSpace(line))
+                                    continue;
+                                txtTeachingLog.AppendText(line + Environment.NewLine);
+                            }
+                        }
+                        catch
+                        {
+                        }
+                    }));
+                }
+                catch
+                {
+                }
             });
         }
 
@@ -1911,7 +2212,7 @@ namespace InspectionProgram.GUI
             }
             if (lblNccResult != null)
             {
-                lblNccResult.Text = "NCC: (" + L("NccModelSaved") + ")";
+                lblNccResult.Text = L("NccModelSaved") + ".";
                 lblNccResult.ForeColor = AppColors.Foreground;
             }
 
@@ -1928,6 +2229,8 @@ namespace InspectionProgram.GUI
             }
 
             TryPersistTeachingInspectionRecipeQuiet();
+            int teachRoiCount = _viewer.CanvasControl.RoiItemCount;
+            NccSharedModelState.SetPatternTeachRoiCountFallback(teachRoiCount > 0 ? teachRoiCount : 1);
         }
 
         private void OnNccRunInspectClicked()

@@ -197,7 +197,7 @@
             this.btnToolZm.Location = new System.Drawing.Point(242, 5);
             this.btnToolZm.Margin = new System.Windows.Forms.Padding(2);
             this.btnToolZm.Name = "btnToolZm";
-            this.btnToolZm.Size = new System.Drawing.Size(40, 24);
+            this.btnToolZm.Size = new System.Drawing.Size(57, 24);
             this.btnToolZm.TabIndex = 3;
             this.btnToolZm.TabStop = false;
             this.btnToolZm.Tag = "ZM";
@@ -208,10 +208,10 @@
             // btnToolZIn
             // 
             this.btnToolZIn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnToolZIn.Location = new System.Drawing.Point(286, 5);
+            this.btnToolZIn.Location = new System.Drawing.Point(303, 5);
             this.btnToolZIn.Margin = new System.Windows.Forms.Padding(2);
             this.btnToolZIn.Name = "btnToolZIn";
-            this.btnToolZIn.Size = new System.Drawing.Size(40, 24);
+            this.btnToolZIn.Size = new System.Drawing.Size(50, 24);
             this.btnToolZIn.TabIndex = 4;
             this.btnToolZIn.TabStop = false;
             this.btnToolZIn.Tag = "Z+";
@@ -222,10 +222,10 @@
             // btnToolZOut
             // 
             this.btnToolZOut.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnToolZOut.Location = new System.Drawing.Point(330, 5);
+            this.btnToolZOut.Location = new System.Drawing.Point(357, 5);
             this.btnToolZOut.Margin = new System.Windows.Forms.Padding(2);
             this.btnToolZOut.Name = "btnToolZOut";
-            this.btnToolZOut.Size = new System.Drawing.Size(40, 24);
+            this.btnToolZOut.Size = new System.Drawing.Size(49, 24);
             this.btnToolZOut.TabIndex = 5;
             this.btnToolZOut.TabStop = false;
             this.btnToolZOut.Tag = "Z-";

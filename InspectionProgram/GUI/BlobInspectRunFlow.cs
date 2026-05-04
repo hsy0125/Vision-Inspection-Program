@@ -18,7 +18,9 @@ namespace InspectionProgram.GUI
     public sealed class BlobInspectRunFlow : IDisposable
     {
         private readonly Control _host;
-        private readonly string _caption;
+        /// <summary><see cref="LocalizationService"/> 키(예: AutoRun, Teaching, InspectFlowCaption).</summary>
+        private readonly string _captionKey;
+        private LanguageType _uiLanguage = LanguageType.Kr;
         private readonly ImageViewPanelView1 _viewer;
         private readonly UcInspectFlowStrip _strip;
         private readonly TextBox _log;
@@ -46,6 +48,9 @@ namespace InspectionProgram.GUI
         private List<string> _imageFolderBatchPaths;
         private int _imageFolderBatchIndex;
         private readonly List<BlobInspectRow> _sessionRows = new List<BlobInspectRow>();
+        private readonly object _sessionCsvLock = new object();
+        private long _autoCsvSerial;
+        private const int AutoCsvChunkSize = 1000;
         private bool _autoBatchRunning;
         private CancellationTokenSource _autoBatchCts;
         private bool _disposed;
@@ -187,7 +192,7 @@ namespace InspectionProgram.GUI
             Func<bool> prepareTeachingRecipeBeforeRunInspect = null)
         {
             _host = host ?? throw new ArgumentNullException(nameof(host));
-            _caption = messageBoxCaption ?? "Inspect";
+            _captionKey = string.IsNullOrWhiteSpace(messageBoxCaption) ? "InspectFlowCaption" : messageBoxCaption;
             _viewer = viewer;
             _strip = strip;
             _log = inspectionLog;
@@ -210,13 +215,24 @@ namespace InspectionProgram.GUI
             }
         }
 
+        public void SetUiLanguage(LanguageType language)
+        {
+            _uiLanguage = language;
+        }
+
+        private string T(string key) => LocalizationService.GetText(key, _uiLanguage);
+
+        private string DialogCaption => LocalizationService.GetText(_captionKey, _uiLanguage);
+
         public void ApplyFlowControlStates()
         {
             try
             {
                 bool on = _viewer != null && _viewer.HasImage;
                 bool batch = _autoBatchRunning;
-                bool canSave = _sessionRows.Count > 0;
+                bool canSave;
+                lock (_sessionCsvLock)
+                    canSave = _sessionRows.Count > 0;
                 if (_strip == null)
                     return;
 
@@ -309,7 +325,22 @@ namespace InspectionProgram.GUI
         public void ClearSessionAndFolder()
         {
             ClearImageFolderBatch();
-            _sessionRows.Clear();
+            lock (_sessionCsvLock)
+                _sessionRows.Clear();
+        }
+
+        /// <summary>지우기(Clear) 시 Blob/NCC 레시피 연동 필드를 초기값으로 돌립니다.</summary>
+        public void ResetInspectionParametersToDefaults()
+        {
+            ExpectedBlobCount = 0;
+            ForegroundPixelMin = 0;
+            ForegroundPixelMax = 0;
+            NccFilterMinScore = double.NaN;
+            NccFilterMaxScore = double.NaN;
+            RecipeNccModelPath = string.Empty;
+            RecipeNccTemplateWidth = 0.0;
+            RecipeNccTemplateHeight = 0.0;
+            RecipeNccMinScore = double.NaN;
         }
 
         public void DefaultThresholdPreview()
@@ -348,7 +379,7 @@ namespace InspectionProgram.GUI
                     try
                     {
                         AppLogger.Write("EX", "ExecuteSameAsRunInspectButton: " + ex);
-                        MessageBox.Show(ex.Message, _caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show(ex.Message, DialogCaption, MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                     catch
                     {
@@ -398,8 +429,8 @@ namespace InspectionProgram.GUI
         public void LoadImageOrFolderFromUserChoice()
         {
             DialogResult r = MessageBox.Show(
-                "이미지 한 장을 열까요, 폴더 전체(목록)를 열까요?\n\n[예] 폴더\n[아니오] 이미지 파일\n[취소] 취소",
-                "1) Load",
+                T("LoadImageChoice"),
+                T("LoadStepCaption"),
                 MessageBoxButtons.YesNoCancel,
                 MessageBoxIcon.Question);
             if (r == DialogResult.Cancel)
@@ -414,7 +445,8 @@ namespace InspectionProgram.GUI
                 _viewer.LoadImageFromDialog();
                 if (_viewer.HasImage == false)
                     return;
-                _sessionRows.Clear();
+                lock (_sessionCsvLock)
+                    _sessionRows.Clear();
                 RefreshImageFolderBatchFromPath(_viewer.CanvasControl.ImagePath);
                 _viewer.ZoomFit();
             }
@@ -461,7 +493,7 @@ namespace InspectionProgram.GUI
                         try
                         {
                             AppLogger.Write("EX", "RunInspection prepare: " + prepEx);
-                            MessageBox.Show(prepEx.Message, _caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            MessageBox.Show(prepEx.Message, DialogCaption, MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                         catch
                         {
@@ -480,7 +512,7 @@ namespace InspectionProgram.GUI
                     try
                     {
                         AppLogger.Write("EX", "RunInspection: " + ex);
-                        MessageBox.Show(ex.Message, _caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show(ex.Message, DialogCaption, MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                     catch
                     {
@@ -585,7 +617,7 @@ namespace InspectionProgram.GUI
         {
             using (var fbd = new FolderBrowserDialog())
             {
-                fbd.Description = "검사에 사용할 이미지가 있는 폴더";
+                fbd.Description = T("FolderBrowserInspectImages");
                 fbd.ShowNewFolderButton = false;
                 Form owner = _host.FindForm();
                 if (fbd.ShowDialog(owner) != DialogResult.OK || string.IsNullOrWhiteSpace(fbd.SelectedPath))
@@ -602,19 +634,20 @@ namespace InspectionProgram.GUI
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("폴더를 읽을 수 없습니다: " + ex.Message, _caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(string.Format(CultureInfo.InvariantCulture, T("ErrFolderReadFmt"), ex.Message), DialogCaption, MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return false;
                 }
 
                 if (list.Count == 0)
                 {
-                    MessageBox.Show("이 폴더에 지원하는 이미지가 없습니다.", _caption, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(T("MsgNoImagesInFolder"), DialogCaption, MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return false;
                 }
 
                 list.Sort(StringComparer.OrdinalIgnoreCase);
                 ClearImageFolderBatch();
-                _sessionRows.Clear();
+                lock (_sessionCsvLock)
+                    _sessionRows.Clear();
                 _imageFolderBatchPaths = list;
                 _imageFolderBatchIndex = 0;
                 _viewer.LoadImage(_imageFolderBatchPaths[0]);
@@ -628,7 +661,7 @@ namespace InspectionProgram.GUI
         {
             if (_viewer?.CanvasControl == null || !_viewer.HasImage)
             {
-                MessageBox.Show("먼저 Load로 이미지를 불러오세요.", _caption, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(T("MsgLoadImageFirst"), DialogCaption, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -643,7 +676,7 @@ namespace InspectionProgram.GUI
 
             if (_imageFolderBatchPaths == null || _imageFolderBatchPaths.Count == 0)
             {
-                MessageBox.Show("이미지 목록이 없습니다. (파일/폴더 Load로 이미지를 열어 주세요.)", _caption, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(T("MsgNoImageListForBatch"), DialogCaption, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -667,14 +700,14 @@ namespace InspectionProgram.GUI
             ApplyFlowControlStates();
             try
             {
-                AppendLine("자동 사이클 시작: " + paths.Count + "장");
+                AppendLine(string.Format(CultureInfo.InvariantCulture, T("BatchStartFmt"), paths.Count));
                 var swBatch = Stopwatch.StartNew();
                 int processed = 0;
                 for (int i = 0; i < paths.Count; i++)
                 {
                     if (_autoBatchCts != null && _autoBatchCts.IsCancellationRequested)
                     {
-                        AppendLine("자동 사이클 취소됨");
+                        AppendLine(T("BatchCancelled"));
                         break;
                     }
 
@@ -724,7 +757,7 @@ namespace InspectionProgram.GUI
                     {
                         double sec = Math.Max(0.001, swBatch.Elapsed.TotalSeconds);
                         double ips = processed / sec;
-                        AppendLine(string.Format(CultureInfo.InvariantCulture, "속도: {0:0.0} 장/초 (avg {1:0} ms/장)", ips, 1000.0 / ips));
+                        AppendLine(string.Format(CultureInfo.InvariantCulture, T("SpeedLogFmt"), ips, 1000.0 / ips));
                     }
                 }
 
@@ -733,7 +766,7 @@ namespace InspectionProgram.GUI
                 {
                     double sec = Math.Max(0.001, swBatch.Elapsed.TotalSeconds);
                     double ips = processed / sec;
-                    AppendLine(string.Format(CultureInfo.InvariantCulture, "자동 사이클 완료: {0}장, {1:0.00}s, {2:0.0} 장/초 (avg {3:0} ms/장)", processed, sec, ips, 1000.0 / ips));
+                    AppendLine(string.Format(CultureInfo.InvariantCulture, T("BatchCompleteFmt"), processed, sec, ips, 1000.0 / ips));
                 }
             }
             finally
@@ -795,7 +828,7 @@ namespace InspectionProgram.GUI
                     AppendLine(
                         string.Format(
                             CultureInfo.InvariantCulture,
-                            "ROI 전경 픽셀(mask): count={0}, range=[{1},{2}]",
+                            T("RoiFgCountLogFmt"),
                             fgCount,
                             minText,
                             maxText));
@@ -806,7 +839,7 @@ namespace InspectionProgram.GUI
                     {
                         string reason = string.Format(
                             CultureInfo.InvariantCulture,
-                            "ROI 전경 픽셀 수 범위 벗어남: count={0}, range=[{1},{2}]",
+                            T("RoiFgRejectFmt"),
                             fgCount,
                             minText,
                             maxText);
@@ -816,7 +849,7 @@ namespace InspectionProgram.GUI
                 }
                 else
                 {
-                    AppendLine("ROI 전경 픽셀(mask) 계산 실패: " + fgErr);
+                    AppendLine(T("RoiFgCalcFailAppend") + fgErr);
                 }
             }
 
@@ -837,7 +870,7 @@ namespace InspectionProgram.GUI
             EvaluateBlobNg(roiCount, blobCount, ExpectedBlobCount, out isNg, out note);
             DateTime at = DateTime.Now;
             string tIso = at.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-            _sessionRows.Add(new BlobInspectRow
+            AppendSessionRow(new BlobInspectRow
             {
                 TimeLocalIso = tIso,
                 FileName = fileName,
@@ -852,7 +885,7 @@ namespace InspectionProgram.GUI
             AppendLine(
                 string.Format(
                     CultureInfo.InvariantCulture,
-                    "볼 검출(Blob): threshold>={0}, MinArea>={1}, Count={2}, Expected={3} => {4}",
+                    T("BlobDetectLogFmt"),
                     th,
                     minAreaEff,
                     blobCount,
@@ -865,9 +898,9 @@ namespace InspectionProgram.GUI
             try
             {
                 InvokeInspectSummary(
-                    isNg ? "NG" : "OK",
-                    "평균=—",
-                    string.Format(CultureInfo.InvariantCulture, "개수(n)={0}", blobCount));
+                    isNg ? T("JudgeNG") : T("JudgeOK"),
+                    T("InspectAvgDash"),
+                    string.Format(CultureInfo.InvariantCulture, T("InspectCountFmt"), blobCount));
             }
             catch
             {
@@ -981,7 +1014,7 @@ namespace InspectionProgram.GUI
                 catch (Exception ex)
                 {
                     int th = _strip != null && _strip.TrkThreshold != null ? _strip.TrkThreshold.Value : 128;
-                    int roiCount = _viewer.CanvasControl.RoiItemCount;
+                    int roiCount = NccSharedModelState.GetInspectRoiCountWithPatternFallback(_viewer.CanvasControl.RoiItemCount);
                     RecordForcedNg(logicalFileName, th, roiCount, "NCC " + ex.Message);
                     PumpUiOnceBestEffort();
                     return true;
@@ -1040,7 +1073,7 @@ namespace InspectionProgram.GUI
                         AppendLine(
                             string.Format(
                                 CultureInfo.InvariantCulture,
-                                "NCC 픽셀 필터: kept={0}/{1}, range=[{2},{3}]",
+                                T("NccPixelFilterLogFmt"),
                                 filtered.Count,
                                 before,
                                 ForegroundPixelMin > 0 ? ForegroundPixelMin.ToString(CultureInfo.InvariantCulture) : "-",
@@ -1049,7 +1082,7 @@ namespace InspectionProgram.GUI
                 }
 
                 int matchCount = filtered != null ? filtered.Count : 0;
-                int roiCount2 = _viewer.CanvasControl.RoiItemCount;
+                int roiCount2 = NccSharedModelState.GetInspectRoiCountWithPatternFallback(_viewer.CanvasControl.RoiItemCount);
                 string fileName = logicalFileName;
 
                 bool isNg;
@@ -1058,14 +1091,17 @@ namespace InspectionProgram.GUI
                 {
                     isNg = true;
                     note = rawCount <= 0
-                        ? "NCC 매칭 없음"
-                        : "NCC 필터 후 매칭 0 (raw=" + rawCount.ToString(CultureInfo.InvariantCulture) + ")";
+                        ? T("NccNoMatchNote")
+                        : string.Format(CultureInfo.InvariantCulture, T("NccFilterZeroNoteFmt"), rawCount);
                 }
                 else if (ExpectedBlobCount > 0 && matchCount != ExpectedBlobCount)
                 {
                     isNg = true;
-                    note = "개수 불일치: expected=" + ExpectedBlobCount.ToString(CultureInfo.InvariantCulture)
-                        + ", actual=" + matchCount.ToString(CultureInfo.InvariantCulture);
+                    note = string.Format(
+                        CultureInfo.InvariantCulture,
+                        T("NccCountMismatchFmt"),
+                        ExpectedBlobCount,
+                        matchCount);
                 }
                 else
                 {
@@ -1075,7 +1111,7 @@ namespace InspectionProgram.GUI
 
                 DateTime at = DateTime.Now;
                 string tIso = at.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                _sessionRows.Add(new BlobInspectRow
+                AppendSessionRow(new BlobInspectRow
                 {
                     TimeLocalIso = tIso,
                     FileName = fileName,
@@ -1124,14 +1160,14 @@ namespace InspectionProgram.GUI
                         }
                     }
 
-                    string matchLine = "일치율 = —";
+                    string matchLine = T("MatchRateDash");
                     if (TryComputeNccScoreAverage(filtered, out double avgDraw))
-                        matchLine = string.Format(CultureInfo.InvariantCulture, "일치율 = {0:F2}%", avgDraw * 100.0);
+                        matchLine = string.Format(CultureInfo.InvariantCulture, T("MatchRateFmt"), avgDraw * 100.0);
 
                     InvokeInspectSummary(
-                        isNg ? "NG" : "OK",
+                        isNg ? T("JudgeNG") : T("JudgeOK"),
                         matchLine,
-                        string.Format(CultureInfo.InvariantCulture, "개수 = {0}", matchCount));
+                        string.Format(CultureInfo.InvariantCulture, T("CountEqualsFmt"), matchCount));
                 }
                 finally
                 {
@@ -1143,7 +1179,7 @@ namespace InspectionProgram.GUI
                 if (TryComputeNccScoreAverage(filtered, out double avgLog))
                     logDetail += "  avgScore=" + avgLog.ToString("F3", CultureInfo.InvariantCulture);
 
-                AppendLine("NCC 카운트  " + logDetail);
+                AppendLine(T("NccCountLogPrefix") + logDetail);
 
                 if (isNg)
                     AppendNgFocusedLine(fileName, at, roiCount2, matchCount, th2, note);
@@ -1223,11 +1259,11 @@ namespace InspectionProgram.GUI
 
         private void RecordForcedNg(string fileName, int th, int roiCount, string note)
         {
-            InvokeInspectSummary("NG", "일치율 = —", "");
+            InvokeInspectSummary(T("JudgeNG"), T("MatchRateDash"), string.Empty);
 
             DateTime at = DateTime.Now;
             string tIso = at.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-            _sessionRows.Add(new BlobInspectRow
+            AppendSessionRow(new BlobInspectRow
             {
                 TimeLocalIso = tIso,
                 FileName = fileName,
@@ -1308,27 +1344,30 @@ namespace InspectionProgram.GUI
             }
         }
 
-        private static void EvaluateBlobNg(int roiCount, int blobCount, int expectedBlobCount, out bool isNg, out string note)
+        private void EvaluateBlobNg(int roiCount, int blobCount, int expectedBlobCount, out bool isNg, out string note)
         {
             if (roiCount == 0)
             {
                 isNg = true;
-                note = "ROI 없음";
+                note = T("NoteRoiMissing");
                 return;
             }
 
             if (blobCount == 0)
             {
                 isNg = true;
-                note = "ROI 내 Blob 0";
+                note = T("NoteBlobZero");
                 return;
             }
 
             if (expectedBlobCount > 0 && blobCount != expectedBlobCount)
             {
                 isNg = true;
-                note = "Blob 개수 불일치: expected=" + expectedBlobCount.ToString(CultureInfo.InvariantCulture)
-                    + ", actual=" + blobCount.ToString(CultureInfo.InvariantCulture);
+                note = string.Format(
+                    CultureInfo.InvariantCulture,
+                    T("NoteBlobCountMismatchFmt"),
+                    expectedBlobCount,
+                    blobCount);
                 return;
             }
 
@@ -1361,18 +1400,98 @@ namespace InspectionProgram.GUI
             _log.AppendText(ts + "  " + line + Environment.NewLine);
         }
 
+        private void AppendSessionRow(BlobInspectRow row)
+        {
+            if (row == null)
+                return;
+            lock (_sessionCsvLock)
+            {
+                _sessionRows.Add(row);
+                FlushAutoCsvChunksLocked();
+            }
+        }
+
+        /// <summary>세션 행이 <see cref="AutoCsvChunkSize"/>개가 될 때마다 Log 폴더에 CSV를 씁니다. 호출 시 잠금 보유.</summary>
+        private void FlushAutoCsvChunksLocked()
+        {
+            while (_sessionRows.Count >= AutoCsvChunkSize)
+            {
+                List<BlobInspectRow> chunk = _sessionRows.GetRange(0, AutoCsvChunkSize);
+                _sessionRows.RemoveRange(0, AutoCsvChunkSize);
+                string path = BuildAutoCsvFilePath();
+                try
+                {
+                    WriteCsvRowsToPath(chunk, path);
+                    AppendLine(string.Format(CultureInfo.InvariantCulture, T("AutoCsvSavedLogFmt"), path, chunk.Count));
+                    AppLogger.Write(
+                        "INSPECT",
+                        "CSV auto-saved rows=" + chunk.Count.ToString(CultureInfo.InvariantCulture) + " path=" + path);
+                }
+                catch (Exception ex)
+                {
+                    _sessionRows.InsertRange(0, chunk);
+                    AppendLine(string.Format(CultureInfo.InvariantCulture, T("AutoCsvFailLogFmt"), ex.Message));
+                    AppLogger.Write("EX", "CSV auto-save failed: " + ex.Message);
+                    break;
+                }
+            }
+        }
+
+        private string BuildAutoCsvFilePath()
+        {
+            InspectionResultLogPaths.EnsureDirectoryExists();
+            long n = Interlocked.Increment(ref _autoCsvSerial);
+            string fn =
+                DateTime.Now.ToString("yy-MM-dd-HHmmss", CultureInfo.InvariantCulture)
+                + "_"
+                + DateTime.Now.Millisecond.ToString("000", CultureInfo.InvariantCulture)
+                + "_"
+                + n.ToString("0000", CultureInfo.InvariantCulture)
+                + "_auto.csv";
+            return Path.Combine(InspectionResultLogPaths.GetLogDirectory(), fn);
+        }
+
+        private static void WriteCsvRowsToPath(IReadOnlyList<BlobInspectRow> rows, string path)
+        {
+            var sb = new StringBuilder();
+            sb.Append("Time,FileName,Result,RoiCount,BlobCount,Threshold,Note");
+            sb.AppendLine();
+            for (int i = 0; i < rows.Count; i++)
+            {
+                BlobInspectRow r = rows[i];
+                sb.AppendLine(
+                    string.Join(
+                        ",",
+                        CsvEscape(r.TimeLocalIso),
+                        CsvEscape(r.FileName),
+                        CsvEscape(r.Result),
+                        r.RoiCount.ToString(CultureInfo.InvariantCulture),
+                        r.BlobCount.ToString(CultureInfo.InvariantCulture),
+                        r.Th.ToString(CultureInfo.InvariantCulture),
+                        CsvEscape(r.Note ?? string.Empty)));
+            }
+
+            File.WriteAllText(path, sb.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+        }
+
         private void SaveSessionCsvToFileWithDialog()
         {
-            if (_sessionRows == null || _sessionRows.Count == 0)
+            List<BlobInspectRow> snapshot;
+            lock (_sessionCsvLock)
             {
-                MessageBox.Show("저장할 세션 행이 없습니다. (먼저 Run inspect 를 실행하세요.)", "CSV", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                snapshot = new List<BlobInspectRow>(_sessionRows);
+            }
+
+            if (snapshot.Count == 0)
+            {
+                MessageBox.Show(T("MsgNoSessionRowsCsv"), T("CsvDialogTitleShort"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
             using (var dlg = new SaveFileDialog())
             {
-                dlg.Filter = "CSV|*.csv|모든 파일|*.*";
-                dlg.Title = "검사 세션 CSV 저장";
+                dlg.Filter = T("CsvFileFilter");
+                dlg.Title = T("CsvSaveDialogTitle");
                 InspectionResultLogPaths.EnsureDirectoryExists();
                 dlg.InitialDirectory = InspectionResultLogPaths.GetLogDirectory();
                 dlg.FileName = Path.GetFileName(InspectionResultLogPaths.BuildCsvFilePath(DateTime.Now));
@@ -1382,33 +1501,15 @@ namespace InspectionProgram.GUI
                 string path = dlg.FileName;
                 try
                 {
-                    var sb = new StringBuilder();
-                    sb.Append("Time,FileName,Result,RoiCount,BlobCount,Threshold,Note");
-                    sb.AppendLine();
-                    for (int i = 0; i < _sessionRows.Count; i++)
-                    {
-                        var r = _sessionRows[i];
-                        sb.AppendLine(
-                            string.Join(
-                                ",",
-                                CsvEscape(r.TimeLocalIso),
-                                CsvEscape(r.FileName),
-                                CsvEscape(r.Result),
-                                r.RoiCount.ToString(CultureInfo.InvariantCulture),
-                                r.BlobCount.ToString(CultureInfo.InvariantCulture),
-                                r.Th.ToString(CultureInfo.InvariantCulture),
-                                CsvEscape(r.Note ?? string.Empty)));
-                    }
-
-                    File.WriteAllText(path, sb.ToString(), new UTF8Encoding(true));
+                    WriteCsvRowsToPath(snapshot, path);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("CSV를 쓰지 못했습니다: " + ex.Message, "CSV", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(string.Format(CultureInfo.InvariantCulture, T("ErrCsvWriteFmt"), ex.Message), T("CsvDialogTitleShort"), MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
-                MessageBox.Show("CSV를 저장했습니다.\r\n\r\n" + path, "CSV", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(string.Format(CultureInfo.InvariantCulture, T("MsgCsvSavedFmt"), path), T("CsvDialogTitleShort"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 try
                 {
                     AppLogger.Write("INSPECT", "CSV saved: " + path);

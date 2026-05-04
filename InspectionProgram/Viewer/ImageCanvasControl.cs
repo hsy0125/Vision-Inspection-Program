@@ -446,6 +446,7 @@ namespace ImageViewerWinForms
                 if (bitmap == null)
                     return;
 
+                Size oldSize = _image != null ? _image.Size : Size.Empty;
                 DisposeImage();
                 _image = bitmap;
                 _imagePath = string.Empty;
@@ -459,6 +460,10 @@ namespace ImageViewerWinForms
                 _avgGrayText = string.Empty;
 
                 BuildGrayBuffer();
+                // SetImage와 달리 줌/오프셋을 유지하는데, 이전(파일) 이미지와 해상도가 다르면 프레임이 화면 밖으로 그려질 수 있음.
+                if (oldSize.Width != bitmap.Width || oldSize.Height != bitmap.Height)
+                    FitToWindow();
+
                 BumpImageVersion();
                 RaiseViewStateChanged();
                 RaiseSyncStateChanged();
@@ -3563,7 +3568,26 @@ namespace ImageViewerWinForms
                 _grayBuffer = new byte[(int)pixels];
 
                 Rectangle rect = new Rectangle(0, 0, _image.Width, _image.Height);
-                BitmapData data = _image.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+                PixelFormat lockFmt = _image.PixelFormat;
+                int bytesPerPixel;
+                switch (lockFmt)
+                {
+                    case PixelFormat.Format24bppRgb:
+                        bytesPerPixel = 3;
+                        break;
+                    case PixelFormat.Format32bppArgb:
+                    case PixelFormat.Format32bppPArgb:
+                    case PixelFormat.Format32bppRgb:
+                        bytesPerPixel = 4;
+                        break;
+                    default:
+                        _grayBuffer = null;
+                        _grayBufferWidth = 0;
+                        _grayBufferHeight = 0;
+                        return;
+                }
+
+                BitmapData data = _image.LockBits(rect, ImageLockMode.ReadOnly, lockFmt);
 
                 try
                 {
@@ -3576,11 +3600,11 @@ namespace ImageViewerWinForms
                     for (int y = 0; y < h; y++)
                     {
                         IntPtr src = IntPtr.Add(data.Scan0, y * stride);
-                        System.Runtime.InteropServices.Marshal.Copy(src, row, 0, stride);
+                        Marshal.Copy(src, row, 0, stride);
                         int rowGray = y * _grayBufferWidth;
                         for (int x = 0; x < w; x++)
                         {
-                            int baseIndex = x * 4;
+                            int baseIndex = x * bytesPerPixel;
                             byte b = row[baseIndex + 0];
                             byte g = row[baseIndex + 1];
                             byte r = row[baseIndex + 2];

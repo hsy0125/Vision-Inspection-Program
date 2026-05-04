@@ -17,9 +17,6 @@
         private System.Windows.Forms.Button btnToolFit;
         private System.Windows.Forms.Button btnToolOvClr;
         private System.Windows.Forms.Button btnToolCross;
-        private System.Windows.Forms.Button btnToolGray;
-        private System.Windows.Forms.Button btnToolAvg;
-        private System.Windows.Forms.Button btnToolSync;
         private System.Windows.Forms.Button btnToolMap;
         private System.Windows.Forms.Button btnAddRoiRect;
         private System.Windows.Forms.Panel pnlViewerHost;
@@ -92,12 +89,10 @@
             this.btnToolFit = new System.Windows.Forms.Button();
             this.btnToolOvClr = new System.Windows.Forms.Button();
             this.btnToolCross = new System.Windows.Forms.Button();
-            this.btnToolGray = new System.Windows.Forms.Button();
-            this.btnToolAvg = new System.Windows.Forms.Button();
-            this.btnToolSync = new System.Windows.Forms.Button();
             this.btnToolMap = new System.Windows.Forms.Button();
             this.btnAddRoiRect = new System.Windows.Forms.Button();
             this.tlpViewerRoot = new System.Windows.Forms.TableLayoutPanel();
+            this.ucInspectFlowStrip1 = new InspectionProgram.GUI.UcInspectFlowStrip();
             this.pnlViewerHost = new System.Windows.Forms.Panel();
             this.pnlViewerBottom = new System.Windows.Forms.Panel();
             this.btnDrawString = new System.Windows.Forms.Button();
@@ -144,7 +139,6 @@
             this.numFgPixelMax = new System.Windows.Forms.NumericUpDown();
             this.grpTeachingLog = new System.Windows.Forms.GroupBox();
             this.txtTeachingLog = new System.Windows.Forms.TextBox();
-            this.ucInspectFlowStrip1 = new InspectionProgram.GUI.UcInspectFlowStrip();
             ((System.ComponentModel.ISupportInitialize)(this.splitMain)).BeginInit();
             this.splitMain.Panel1.SuspendLayout();
             this.splitMain.Panel2.SuspendLayout();
@@ -244,9 +238,6 @@
             this.flpViewerToolbar.Controls.Add(this.btnToolFit);
             this.flpViewerToolbar.Controls.Add(this.btnToolOvClr);
             this.flpViewerToolbar.Controls.Add(this.btnToolCross);
-            this.flpViewerToolbar.Controls.Add(this.btnToolGray);
-            this.flpViewerToolbar.Controls.Add(this.btnToolAvg);
-            this.flpViewerToolbar.Controls.Add(this.btnToolSync);
             this.flpViewerToolbar.Controls.Add(this.btnToolMap);
             this.flpViewerToolbar.Controls.Add(this.btnAddRoiRect);
             this.flpViewerToolbar.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -384,52 +375,10 @@
             this.btnToolCross.UseVisualStyleBackColor = true;
             this.btnToolCross.Click += new System.EventHandler(this.btnToolCross_Click);
             // 
-            // btnToolGray
-            // 
-            this.btnToolGray.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnToolGray.Location = new System.Drawing.Point(608, 6);
-            this.btnToolGray.Margin = new System.Windows.Forms.Padding(2, 0, 6, 0);
-            this.btnToolGray.Name = "btnToolGray";
-            this.btnToolGray.Size = new System.Drawing.Size(44, 24);
-            this.btnToolGray.TabIndex = 19;
-            this.btnToolGray.TabStop = false;
-            this.btnToolGray.Tag = "GRAY";
-            this.btnToolGray.Text = "Gray";
-            this.btnToolGray.UseVisualStyleBackColor = true;
-            this.btnToolGray.Click += new System.EventHandler(this.btnToolGray_Click);
-            // 
-            // btnToolAvg
-            // 
-            this.btnToolAvg.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnToolAvg.Location = new System.Drawing.Point(660, 6);
-            this.btnToolAvg.Margin = new System.Windows.Forms.Padding(2, 0, 6, 0);
-            this.btnToolAvg.Name = "btnToolAvg";
-            this.btnToolAvg.Size = new System.Drawing.Size(40, 24);
-            this.btnToolAvg.TabIndex = 20;
-            this.btnToolAvg.TabStop = false;
-            this.btnToolAvg.Tag = "AVG";
-            this.btnToolAvg.Text = "Avg";
-            this.btnToolAvg.UseVisualStyleBackColor = true;
-            this.btnToolAvg.Click += new System.EventHandler(this.btnToolAvg_Click);
-            // 
-            // btnToolSync
-            // 
-            this.btnToolSync.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnToolSync.Location = new System.Drawing.Point(708, 6);
-            this.btnToolSync.Margin = new System.Windows.Forms.Padding(2, 0, 6, 0);
-            this.btnToolSync.Name = "btnToolSync";
-            this.btnToolSync.Size = new System.Drawing.Size(44, 24);
-            this.btnToolSync.TabIndex = 21;
-            this.btnToolSync.TabStop = false;
-            this.btnToolSync.Tag = "SYNC";
-            this.btnToolSync.Text = "Sync";
-            this.btnToolSync.UseVisualStyleBackColor = true;
-            this.btnToolSync.Click += new System.EventHandler(this.btnToolSync_Click);
-            // 
             // btnToolMap
             // 
             this.btnToolMap.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnToolMap.Location = new System.Drawing.Point(760, 6);
+            this.btnToolMap.Location = new System.Drawing.Point(608, 6);
             this.btnToolMap.Margin = new System.Windows.Forms.Padding(2, 0, 12, 0);
             this.btnToolMap.Name = "btnToolMap";
             this.btnToolMap.Size = new System.Drawing.Size(40, 24);
@@ -443,7 +392,7 @@
             // btnAddRoiRect
             // 
             this.btnAddRoiRect.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnAddRoiRect.Location = new System.Drawing.Point(814, 6);
+            this.btnAddRoiRect.Location = new System.Drawing.Point(662, 6);
             this.btnAddRoiRect.Margin = new System.Windows.Forms.Padding(2, 0, 6, 0);
             this.btnAddRoiRect.Name = "btnAddRoiRect";
             this.btnAddRoiRect.Size = new System.Drawing.Size(60, 24);
@@ -468,6 +417,15 @@
             this.tlpViewerRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 38F));
             this.tlpViewerRoot.Size = new System.Drawing.Size(971, 762);
             this.tlpViewerRoot.TabIndex = 0;
+            // 
+            // ucInspectFlowStrip1
+            // 
+            this.ucInspectFlowStrip1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ucInspectFlowStrip1.Location = new System.Drawing.Point(0, 0);
+            this.ucInspectFlowStrip1.Margin = new System.Windows.Forms.Padding(0);
+            this.ucInspectFlowStrip1.Name = "ucInspectFlowStrip1";
+            this.ucInspectFlowStrip1.Size = new System.Drawing.Size(971, 40);
+            this.ucInspectFlowStrip1.TabIndex = 2;
             // 
             // pnlViewerHost
             // 
@@ -579,7 +537,7 @@
             this.flowRowNccTitle.Location = new System.Drawing.Point(10, 53);
             this.flowRowNccTitle.Margin = new System.Windows.Forms.Padding(0, 4, 0, 2);
             this.flowRowNccTitle.Name = "flowRowNccTitle";
-            this.flowRowNccTitle.Size = new System.Drawing.Size(88, 16);
+            this.flowRowNccTitle.Size = new System.Drawing.Size(57, 16);
             this.flowRowNccTitle.TabIndex = 1;
             this.flowRowNccTitle.WrapContents = false;
             // 
@@ -589,7 +547,7 @@
             this.lblNccHeader.Location = new System.Drawing.Point(0, 0);
             this.lblNccHeader.Margin = new System.Windows.Forms.Padding(0, 0, 0, 4);
             this.lblNccHeader.Name = "lblNccHeader";
-            this.lblNccHeader.Size = new System.Drawing.Size(88, 12);
+            this.lblNccHeader.Size = new System.Drawing.Size(57, 12);
             this.lblNccHeader.TabIndex = 0;
             this.lblNccHeader.Text = "패턴 매칭";
             // 
@@ -602,7 +560,7 @@
             this.lblNccResult.Name = "lblNccResult";
             this.lblNccResult.Size = new System.Drawing.Size(500, 58);
             this.lblNccResult.TabIndex = 1;
-            this.lblNccResult.Text = "NCC: —";
+            this.lblNccResult.Text = "—";
             this.lblNccResult.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // flowRowNccBtn
@@ -865,6 +823,32 @@
             0,
             131072});
             // 
+            // flowRowBlobCount
+            // 
+            this.flowRowBlobCount.AutoSize = true;
+            this.flowRowBlobCount.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.flowRowBlobCount.Controls.Add(this.btnBlobCount);
+            this.flowRowBlobCount.Location = new System.Drawing.Point(10, 332);
+            this.flowRowBlobCount.Margin = new System.Windows.Forms.Padding(0, 0, 0, 8);
+            this.flowRowBlobCount.Name = "flowRowBlobCount";
+            this.flowRowBlobCount.Size = new System.Drawing.Size(79, 22);
+            this.flowRowBlobCount.TabIndex = 0;
+            this.flowRowBlobCount.Visible = false;
+            this.flowRowBlobCount.WrapContents = false;
+            // 
+            // btnBlobCount
+            // 
+            this.btnBlobCount.AutoSize = true;
+            this.btnBlobCount.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.btnBlobCount.Location = new System.Drawing.Point(0, 0);
+            this.btnBlobCount.Margin = new System.Windows.Forms.Padding(0);
+            this.btnBlobCount.Name = "btnBlobCount";
+            this.btnBlobCount.Size = new System.Drawing.Size(79, 22);
+            this.btnBlobCount.TabIndex = 0;
+            this.btnBlobCount.Text = "개수 카운트";
+            this.btnBlobCount.UseVisualStyleBackColor = true;
+            this.btnBlobCount.Click += new System.EventHandler(this.btnBlobCount_Click);
+            // 
             // flowRowMinArea
             // 
             this.flowRowMinArea.AutoSize = true;
@@ -872,7 +856,7 @@
             this.flowRowMinArea.Controls.Add(this.lblMinAreaTitle);
             this.flowRowMinArea.Controls.Add(this.trkMinArea);
             this.flowRowMinArea.Controls.Add(this.lblMinArea);
-            this.flowRowMinArea.Location = new System.Drawing.Point(10, 332);
+            this.flowRowMinArea.Location = new System.Drawing.Point(10, 362);
             this.flowRowMinArea.Margin = new System.Windows.Forms.Padding(0, 0, 0, 8);
             this.flowRowMinArea.Name = "flowRowMinArea";
             this.flowRowMinArea.Size = new System.Drawing.Size(324, 28);
@@ -919,7 +903,7 @@
             this.flowRowExpected.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.flowRowExpected.Controls.Add(this.lblExpectedTitle);
             this.flowRowExpected.Controls.Add(this.numExpected);
-            this.flowRowExpected.Location = new System.Drawing.Point(10, 368);
+            this.flowRowExpected.Location = new System.Drawing.Point(10, 398);
             this.flowRowExpected.Margin = new System.Windows.Forms.Padding(0, 0, 0, 8);
             this.flowRowExpected.Name = "flowRowExpected";
             this.flowRowExpected.Size = new System.Drawing.Size(184, 23);
@@ -950,6 +934,69 @@
             this.numExpected.TabIndex = 1;
             this.numExpected.ValueChanged += new System.EventHandler(this.DemoOptions_Changed);
             // 
+            // flowRowFgPixelRange
+            // 
+            this.flowRowFgPixelRange.AutoSize = true;
+            this.flowRowFgPixelRange.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.flowRowFgPixelRange.Controls.Add(this.lblFgPixelRangeTitle);
+            this.flowRowFgPixelRange.Controls.Add(this.numFgPixelMin);
+            this.flowRowFgPixelRange.Controls.Add(this.lblFgPixelRangeSep);
+            this.flowRowFgPixelRange.Controls.Add(this.numFgPixelMax);
+            this.flowRowFgPixelRange.Location = new System.Drawing.Point(10, 429);
+            this.flowRowFgPixelRange.Margin = new System.Windows.Forms.Padding(0, 0, 0, 8);
+            this.flowRowFgPixelRange.Name = "flowRowFgPixelRange";
+            this.flowRowFgPixelRange.Size = new System.Drawing.Size(313, 23);
+            this.flowRowFgPixelRange.TabIndex = 0;
+            this.flowRowFgPixelRange.WrapContents = false;
+            // 
+            // lblFgPixelRangeTitle
+            // 
+            this.lblFgPixelRangeTitle.AutoSize = true;
+            this.lblFgPixelRangeTitle.Location = new System.Drawing.Point(0, 6);
+            this.lblFgPixelRangeTitle.Margin = new System.Windows.Forms.Padding(0, 6, 6, 0);
+            this.lblFgPixelRangeTitle.Name = "lblFgPixelRangeTitle";
+            this.lblFgPixelRangeTitle.Size = new System.Drawing.Size(109, 12);
+            this.lblFgPixelRangeTitle.TabIndex = 0;
+            this.lblFgPixelRangeTitle.Text = "ROI 전경 픽셀 범위";
+            // 
+            // numFgPixelMin
+            // 
+            this.numFgPixelMin.Location = new System.Drawing.Point(115, 2);
+            this.numFgPixelMin.Margin = new System.Windows.Forms.Padding(0, 2, 4, 0);
+            this.numFgPixelMin.Maximum = new decimal(new int[] {
+            2000000000,
+            0,
+            0,
+            0});
+            this.numFgPixelMin.Name = "numFgPixelMin";
+            this.numFgPixelMin.Size = new System.Drawing.Size(88, 21);
+            this.numFgPixelMin.TabIndex = 1;
+            this.numFgPixelMin.ValueChanged += new System.EventHandler(this.DemoOptions_Changed);
+            // 
+            // lblFgPixelRangeSep
+            // 
+            this.lblFgPixelRangeSep.AutoSize = true;
+            this.lblFgPixelRangeSep.Location = new System.Drawing.Point(207, 6);
+            this.lblFgPixelRangeSep.Margin = new System.Windows.Forms.Padding(0, 6, 4, 0);
+            this.lblFgPixelRangeSep.Name = "lblFgPixelRangeSep";
+            this.lblFgPixelRangeSep.Size = new System.Drawing.Size(14, 12);
+            this.lblFgPixelRangeSep.TabIndex = 2;
+            this.lblFgPixelRangeSep.Text = "~";
+            // 
+            // numFgPixelMax
+            // 
+            this.numFgPixelMax.Location = new System.Drawing.Point(225, 2);
+            this.numFgPixelMax.Margin = new System.Windows.Forms.Padding(0, 2, 0, 0);
+            this.numFgPixelMax.Maximum = new decimal(new int[] {
+            2000000000,
+            0,
+            0,
+            0});
+            this.numFgPixelMax.Name = "numFgPixelMax";
+            this.numFgPixelMax.Size = new System.Drawing.Size(88, 21);
+            this.numFgPixelMax.TabIndex = 3;
+            this.numFgPixelMax.ValueChanged += new System.EventHandler(this.DemoOptions_Changed);
+            // 
             // grpTeachingLog
             // 
             this.grpTeachingLog.Controls.Add(this.txtTeachingLog);
@@ -970,103 +1017,6 @@
             this.txtTeachingLog.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.txtTeachingLog.Size = new System.Drawing.Size(513, 100);
             this.txtTeachingLog.TabIndex = 0;
-            // 
-            // flowRowBlobCount
-            // 
-            this.flowRowBlobCount.AutoSize = true;
-            this.flowRowBlobCount.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.flowRowBlobCount.Controls.Add(this.btnBlobCount);
-            this.flowRowBlobCount.Location = new System.Drawing.Point(0, 0);
-            this.flowRowBlobCount.Margin = new System.Windows.Forms.Padding(0, 0, 0, 8);
-            this.flowRowBlobCount.Name = "flowRowBlobCount";
-            this.flowRowBlobCount.Size = new System.Drawing.Size(200, 100);
-            this.flowRowBlobCount.TabIndex = 0;
-            this.flowRowBlobCount.WrapContents = false;
-            // 
-            // btnBlobCount
-            // 
-            this.btnBlobCount.AutoSize = true;
-            this.btnBlobCount.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.btnBlobCount.Location = new System.Drawing.Point(0, 0);
-            this.btnBlobCount.Margin = new System.Windows.Forms.Padding(0, 0, 0, 0);
-            this.btnBlobCount.Name = "btnBlobCount";
-            this.btnBlobCount.Size = new System.Drawing.Size(63, 22);
-            this.btnBlobCount.TabIndex = 0;
-            this.btnBlobCount.Text = "개수 카운트";
-            this.btnBlobCount.UseVisualStyleBackColor = true;
-            this.btnBlobCount.Click += new System.EventHandler(this.btnBlobCount_Click);
-            // 
-            // flowRowFgPixelRange
-            // 
-            this.flowRowFgPixelRange.AutoSize = true;
-            this.flowRowFgPixelRange.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.flowRowFgPixelRange.Controls.Add(this.lblFgPixelRangeTitle);
-            this.flowRowFgPixelRange.Controls.Add(this.numFgPixelMin);
-            this.flowRowFgPixelRange.Controls.Add(this.lblFgPixelRangeSep);
-            this.flowRowFgPixelRange.Controls.Add(this.numFgPixelMax);
-            this.flowRowFgPixelRange.Location = new System.Drawing.Point(0, 0);
-            this.flowRowFgPixelRange.Margin = new System.Windows.Forms.Padding(0, 0, 0, 8);
-            this.flowRowFgPixelRange.Name = "flowRowFgPixelRange";
-            this.flowRowFgPixelRange.Size = new System.Drawing.Size(200, 100);
-            this.flowRowFgPixelRange.TabIndex = 0;
-            this.flowRowFgPixelRange.WrapContents = false;
-            // 
-            // lblFgPixelRangeTitle
-            // 
-            this.lblFgPixelRangeTitle.AutoSize = true;
-            this.lblFgPixelRangeTitle.Location = new System.Drawing.Point(0, 6);
-            this.lblFgPixelRangeTitle.Margin = new System.Windows.Forms.Padding(0, 6, 6, 0);
-            this.lblFgPixelRangeTitle.Name = "lblFgPixelRangeTitle";
-            this.lblFgPixelRangeTitle.Size = new System.Drawing.Size(97, 12);
-            this.lblFgPixelRangeTitle.TabIndex = 0;
-            this.lblFgPixelRangeTitle.Text = "ROI 전경 픽셀 범위";
-            // 
-            // numFgPixelMin
-            // 
-            this.numFgPixelMin.Location = new System.Drawing.Point(103, 2);
-            this.numFgPixelMin.Margin = new System.Windows.Forms.Padding(0, 2, 4, 0);
-            this.numFgPixelMin.Maximum = new decimal(new int[] {
-            2000000000,
-            0,
-            0,
-            0});
-            this.numFgPixelMin.Name = "numFgPixelMin";
-            this.numFgPixelMin.Size = new System.Drawing.Size(88, 21);
-            this.numFgPixelMin.TabIndex = 1;
-            this.numFgPixelMin.ValueChanged += new System.EventHandler(this.DemoOptions_Changed);
-            // 
-            // lblFgPixelRangeSep
-            // 
-            this.lblFgPixelRangeSep.AutoSize = true;
-            this.lblFgPixelRangeSep.Location = new System.Drawing.Point(195, 6);
-            this.lblFgPixelRangeSep.Margin = new System.Windows.Forms.Padding(0, 6, 4, 0);
-            this.lblFgPixelRangeSep.Name = "lblFgPixelRangeSep";
-            this.lblFgPixelRangeSep.Size = new System.Drawing.Size(11, 12);
-            this.lblFgPixelRangeSep.TabIndex = 2;
-            this.lblFgPixelRangeSep.Text = "~";
-            // 
-            // numFgPixelMax
-            // 
-            this.numFgPixelMax.Location = new System.Drawing.Point(210, 2);
-            this.numFgPixelMax.Margin = new System.Windows.Forms.Padding(0, 2, 0, 0);
-            this.numFgPixelMax.Maximum = new decimal(new int[] {
-            2000000000,
-            0,
-            0,
-            0});
-            this.numFgPixelMax.Name = "numFgPixelMax";
-            this.numFgPixelMax.Size = new System.Drawing.Size(88, 21);
-            this.numFgPixelMax.TabIndex = 3;
-            this.numFgPixelMax.ValueChanged += new System.EventHandler(this.DemoOptions_Changed);
-            // 
-            // ucInspectFlowStrip1
-            // 
-            this.ucInspectFlowStrip1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ucInspectFlowStrip1.Location = new System.Drawing.Point(0, 0);
-            this.ucInspectFlowStrip1.Margin = new System.Windows.Forms.Padding(0);
-            this.ucInspectFlowStrip1.Name = "ucInspectFlowStrip1";
-            this.ucInspectFlowStrip1.Size = new System.Drawing.Size(971, 40);
-            this.ucInspectFlowStrip1.TabIndex = 2;
             // 
             // UcTeachingShell
             // 

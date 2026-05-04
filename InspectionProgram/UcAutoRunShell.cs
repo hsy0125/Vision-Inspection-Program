@@ -54,7 +54,7 @@ namespace InspectionProgram.GUI
 
             _blobFlow = new BlobInspectRunFlow(
                 this,
-                "Auto Run",
+                "AutoRun",
                 _viewer,
                 ucInspectFlowStrip1,
                 txtInspectionLog,
@@ -232,77 +232,88 @@ namespace InspectionProgram.GUI
                     return false;
 
                 Rectangle imgBounds = new Rectangle(0, 0, sz.Width, sz.Height);
-                _viewer.CanvasControl.ClearROI();
-
-                int added = 0;
-                foreach (Rectangle rect in r.RoiRectangles)
-                {
-                    Rectangle inter = Rectangle.Intersect(rect, imgBounds);
-                    if (inter.Width < 4 || inter.Height < 4)
-                        continue;
-
-                    var roi = new ROIRectangle(inter, Color.LimeGreen, 2);
-                    _viewer.CanvasControl.AddROI(roi);
-                    added++;
-                }
-
-                if (added == 0)
-                {
-                    MessageBox.Show(
-                        "저장된 레시피 ROI를 현재 이미지 크기 안에 맞출 수 없습니다. 이미지 해상도가 티칭 때와 다른지 확인하세요.",
-                        "Auto Run",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Warning);
-                    return false;
-                }
-
-                if (_viewer.CanvasControl.ROIItems != null && _viewer.CanvasControl.ROIItems.Count > 0)
-                    _viewer.CanvasControl.SelectROIByName(_viewer.CanvasControl.ROIItems[0].Name);
-
-                if (ucInspectFlowStrip1?.TrkThreshold != null)
-                {
-                    int tv = r.Threshold;
-                    tv = Math.Max(ucInspectFlowStrip1.TrkThreshold.Minimum, Math.Min(ucInspectFlowStrip1.TrkThreshold.Maximum, tv));
-                    ucInspectFlowStrip1.TrkThreshold.Value = tv;
-                    if (ucInspectFlowStrip1.LblThresholdValue != null)
-                        ucInspectFlowStrip1.LblThresholdValue.Text = tv.ToString(CultureInfo.InvariantCulture);
-                }
-
-                _viewer.CanvasControl.SetBlobOptions(true, r.Threshold, 255, r.MinArea, 0, 0, 0, 0, false);
-                _viewer.CanvasControl.ShowBlob_Bright(true, r.Threshold, 255);
-
-                if (_blobFlow != null)
-                {
-                    _blobFlow.ExpectedBlobCount = r.ExpectedBlobCount;
-                    _blobFlow.ForegroundPixelMin = r.ForegroundPixelMin;
-                    _blobFlow.ForegroundPixelMax = r.ForegroundPixelMax;
-                    _blobFlow.NccFilterMinScore = r.NccFilterMinScore;
-                    _blobFlow.NccFilterMaxScore = r.NccFilterMaxScore;
-                    _blobFlow.RecipeNccModelPath = r.NccModelPath ?? string.Empty;
-                    _blobFlow.RecipeNccTemplateWidth = r.NccTemplateWidth;
-                    _blobFlow.RecipeNccTemplateHeight = r.NccTemplateHeight;
-                    _blobFlow.RecipeNccMinScore = r.NccMinScore;
-                }
-
+                NccSharedModelState.BeginProgrammaticRoiUpdate();
                 try
                 {
-                    if (!string.IsNullOrWhiteSpace(r.NccModelPath) && System.IO.File.Exists(r.NccModelPath))
-                    {
-                        double ms = (!double.IsNaN(r.NccMinScore) && r.NccMinScore >= 0.0 && r.NccMinScore <= 1.0)
-                            ? r.NccMinScore
-                            : 0.75;
-                        NccSharedModelState.Set(r.NccModelPath, r.NccTemplateWidth, r.NccTemplateHeight, ms);
-                    }
-                }
-                catch
-                {
-                }
+                    _viewer.CanvasControl.ClearROI();
 
-                _blobFlow?.DefaultThresholdPreview();
-                _blobFlow?.ApplyFlowControlStates();
-                if (_viewer?.CanvasControl != null)
-                    _viewer.CanvasControl.ShowUserRoiOverlay = true;
-                return true;
+                    int added = 0;
+                    foreach (Rectangle rect in r.RoiRectangles)
+                    {
+                        Rectangle inter = Rectangle.Intersect(rect, imgBounds);
+                        if (inter.Width < 4 || inter.Height < 4)
+                            continue;
+
+                        var roi = new ROIRectangle(inter, Color.LimeGreen, 2);
+                        _viewer.CanvasControl.AddROI(roi);
+                        added++;
+                    }
+
+                    if (added == 0)
+                    {
+                        MessageBox.Show(
+                            "저장된 레시피 ROI를 현재 이미지 크기 안에 맞출 수 없습니다. 이미지 해상도가 티칭 때와 다른지 확인하세요.",
+                            "Auto Run",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning);
+                        return false;
+                    }
+
+                    if (_viewer.CanvasControl.ROIItems != null && _viewer.CanvasControl.ROIItems.Count > 0)
+                        _viewer.CanvasControl.SelectROIByName(_viewer.CanvasControl.ROIItems[0].Name);
+
+                    if (ucInspectFlowStrip1?.TrkThreshold != null)
+                    {
+                        int tv = r.Threshold;
+                        tv = Math.Max(ucInspectFlowStrip1.TrkThreshold.Minimum, Math.Min(ucInspectFlowStrip1.TrkThreshold.Maximum, tv));
+                        ucInspectFlowStrip1.TrkThreshold.Value = tv;
+                        if (ucInspectFlowStrip1.LblThresholdValue != null)
+                            ucInspectFlowStrip1.LblThresholdValue.Text = tv.ToString(CultureInfo.InvariantCulture);
+                    }
+
+                    _viewer.CanvasControl.SetBlobOptions(true, r.Threshold, 255, r.MinArea, 0, 0, 0, 0, false);
+                    _viewer.CanvasControl.ShowBlob_Bright(true, r.Threshold, 255);
+
+                    if (_blobFlow != null)
+                    {
+                        _blobFlow.ExpectedBlobCount = r.ExpectedBlobCount;
+                        _blobFlow.ForegroundPixelMin = r.ForegroundPixelMin;
+                        _blobFlow.ForegroundPixelMax = r.ForegroundPixelMax;
+                        _blobFlow.NccFilterMinScore = r.NccFilterMinScore;
+                        _blobFlow.NccFilterMaxScore = r.NccFilterMaxScore;
+                        _blobFlow.RecipeNccModelPath = r.NccModelPath ?? string.Empty;
+                        _blobFlow.RecipeNccTemplateWidth = r.NccTemplateWidth;
+                        _blobFlow.RecipeNccTemplateHeight = r.NccTemplateHeight;
+                        _blobFlow.RecipeNccMinScore = r.NccMinScore;
+                    }
+
+                    try
+                    {
+                        if (!string.IsNullOrWhiteSpace(r.NccModelPath) && System.IO.File.Exists(r.NccModelPath))
+                        {
+                            double ms = (!double.IsNaN(r.NccMinScore) && r.NccMinScore >= 0.0 && r.NccMinScore <= 1.0)
+                                ? r.NccMinScore
+                                : 0.75;
+                            NccSharedModelState.Set(r.NccModelPath, r.NccTemplateWidth, r.NccTemplateHeight, ms);
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(r.NccModelPath) && System.IO.File.Exists(r.NccModelPath))
+                        NccSharedModelState.SetPatternTeachRoiCountFallback(added);
+
+                    _blobFlow?.DefaultThresholdPreview();
+                    _blobFlow?.ApplyFlowControlStates();
+                    if (_viewer?.CanvasControl != null)
+                        _viewer.CanvasControl.ShowUserRoiOverlay = true;
+                    return true;
+                }
+                finally
+                {
+                    NccSharedModelState.EndProgrammaticRoiUpdate();
+                }
             }
             catch (Exception ex)
             {
@@ -366,6 +377,34 @@ namespace InspectionProgram.GUI
                     dgvCount.Columns[3].HeaderText = LocalizationService.GetText("Reject", language);
                     dgvCount.Columns[4].HeaderText = LocalizationService.GetText("Yield", language);
                 }
+
+                for (int i = 0; i < tabCamera.TabPages.Count; i++)
+                {
+                    tabCamera.TabPages[i].Text =
+                        LocalizationService.GetText("Camera", language) + " " + (i + 1).ToString("00", CultureInfo.InvariantCulture);
+                }
+
+                if (dgvCount != null)
+                {
+                    for (int r = 0; r < dgvCount.Rows.Count; r++)
+                    {
+                        if (dgvCount.Columns.Count > 0 && dgvCount.Rows[r].Cells[0] != null)
+                        {
+                            dgvCount.Rows[r].Cells[0].Value =
+                                LocalizationService.GetText("Camera", language) + " " + (r + 1).ToString("00", CultureInfo.InvariantCulture);
+                        }
+                    }
+                }
+
+                if (lblCurrentDeviceValue != null && tabCamera.SelectedIndex >= 0)
+                {
+                    int idx = tabCamera.SelectedIndex;
+                    lblCurrentDeviceValue.Text =
+                        LocalizationService.GetText("Camera", language) + " " + (idx + 1).ToString("00", CultureInfo.InvariantCulture);
+                }
+
+                ViewerShellToolbarExtras.ApplyToolbarLanguage(flpViewerToolbar, language);
+                _blobFlow?.SetUiLanguage(language);
             }
             catch
             {
@@ -511,22 +550,27 @@ namespace InspectionProgram.GUI
 
                 if (tabCamera.TabPages.Count == 0)
                 {
-                    tabCamera.TabPages.Add(new TabPage("CAM 01"));
-                    tabCamera.TabPages.Add(new TabPage("CAM 02"));
-                    tabCamera.TabPages.Add(new TabPage("CAM 03"));
-                    tabCamera.TabPages.Add(new TabPage("CAM 04"));
+                    for (int c = 1; c <= 4; c++)
+                    {
+                        tabCamera.TabPages.Add(
+                            new TabPage(
+                                LocalizationService.GetText("Camera", _currentLanguage) + " " + c.ToString("00", CultureInfo.InvariantCulture)));
+                    }
                 }
 
                 if (dgvCount.Rows.Count == 0)
                 {
-                    dgvCount.Rows.Add("CAM 01", "1000", "950", "50", "95.00%");
-                    dgvCount.Rows.Add("CAM 02", "1000", "930", "70", "93.00%");
-                    dgvCount.Rows.Add("CAM 03", "1000", "980", "20", "98.00%");
-                    dgvCount.Rows.Add("CAM 04", "1000", "970", "30", "97.00%");
+                    string cam(LanguageType lang, int n) =>
+                        LocalizationService.GetText("Camera", lang) + " " + n.ToString("00", CultureInfo.InvariantCulture);
+                    dgvCount.Rows.Add(cam(_currentLanguage, 1), "1000", "950", "50", "95.00%");
+                    dgvCount.Rows.Add(cam(_currentLanguage, 2), "1000", "930", "70", "93.00%");
+                    dgvCount.Rows.Add(cam(_currentLanguage, 3), "1000", "980", "20", "98.00%");
+                    dgvCount.Rows.Add(cam(_currentLanguage, 4), "1000", "970", "30", "97.00%");
                     dgvCount.Rows[0].Selected = true;
                 }
 
-                lblCurrentDeviceValue.Text = "CAM 01";
+                lblCurrentDeviceValue.Text =
+                    LocalizationService.GetText("Camera", _currentLanguage) + " " + (1).ToString("00", CultureInfo.InvariantCulture);
                 txtInspectionLog.Text = BuildAutoRunFlowHelpText(_currentLanguage);
                 txtSystemLog.Text = LocalizationService.GetText("SystemReady", _currentLanguage);
             });
@@ -682,6 +726,9 @@ namespace InspectionProgram.GUI
         {
             if (_viewer?.CanvasControl == null)
                 return;
+            _viewer.RoiCollectionChanged += (_, __) =>
+                AppExceptionHandler.ExecuteBestEffort("UcAutoRunShell.RoiInv", () =>
+                    NccSharedModelState.NotifyUserRoiCollectionChangedMayInvalidatePatternSnapshot());
             _viewer.CanvasControl.ImageLoaded += (_, __) =>
                 AppExceptionHandler.ExecuteBestEffort("UcAutoRunShell.ImageLoaded", () =>
                 {
@@ -696,6 +743,26 @@ namespace InspectionProgram.GUI
                     if (_viewer.CanvasControl.RoiItemCount == 0)
                         TryApplyTeachingInspectionRecipe(showMissingRecipeMessage: false);
                 });
+        }
+
+        /// <summary>뷰어 «지우기»: 이미지·ROI·세션과 공유 NCC/티칭 레시피 메모리를 비워 두 검사 모드가 남은 상태에 묶이지 않게 합니다.</summary>
+        private void ApplyAutoRunFullViewerReset()
+        {
+            ClearAutoRunInspectSummaryOverlay();
+            NccSharedModelState.ResetSession();
+            TeachingInspectionRecipeStore.Clear();
+            _blobFlow.CancelAutoBatchIfAny();
+            _blobFlow.ResetInspectionParametersToDefaults();
+            if (ucInspectFlowStrip1?.TrkThreshold != null)
+            {
+                ucInspectFlowStrip1.TrkThreshold.Value = 128;
+                if (ucInspectFlowStrip1.LblThresholdValue != null)
+                    ucInspectFlowStrip1.LblThresholdValue.Text = "128";
+            }
+
+            _viewer.ClearDisplay();
+            _blobFlow.ClearSessionAndFolder();
+            _blobFlow.ApplyFlowControlStates();
         }
 
         private void btnViewerTool_Click(object sender, EventArgs e)
@@ -714,7 +781,11 @@ namespace InspectionProgram.GUI
                     case "ADD_ROI":
                         if (_viewer?.CanvasControl == null || !_viewer.HasImage)
                         {
-                            MessageBox.Show("먼저 Load로 이미지를 불러오세요.", "Auto Run", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            MessageBox.Show(
+                                LocalizationService.GetText("MsgLoadImageFirst", _currentLanguage),
+                                LocalizationService.GetText("AutoRun", _currentLanguage),
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Information);
                             break;
                         }
 
@@ -734,11 +805,7 @@ namespace InspectionProgram.GUI
 
                         break;
                     case "CLEAR":
-                        ClearAutoRunInspectSummaryOverlay();
-                        _blobFlow.CancelAutoBatchIfAny();
-                        _viewer.ClearDisplay();
-                        _blobFlow.ClearSessionAndFolder();
-                        _blobFlow.ApplyFlowControlStates();
+                        ApplyAutoRunFullViewerReset();
                         break;
                     case "SAVE":
                         _viewer.SaveImageFromDialog();
@@ -812,89 +879,97 @@ namespace InspectionProgram.GUI
                 if (r.IsOk == false)
                     return r.JudgmentSummary;
 
-                double row = r.Row[0].D;
-                double col = r.Column[0].D;
-                double angle = r.Angle[0].D;
-                AppLogger.Write(
-                    "NCC",
-                    string.Format(
-                        CultureInfo.InvariantCulture,
-                        "AutoRun NCC: {0} row={1:0.00} col={2:0.00} ang={3:0.000} hasRef={4}",
-                        System.IO.Path.GetFileName(imagePath), row, col, angle, hasRefPose));
-
-                if (hasRefPose && NccSharedModelState.AlignImagesEnabled)
+                NccSharedModelState.BeginProgrammaticRoiUpdate();
+                try
                 {
-                    Bitmap aligned = NccImageAlignment.AlignImageFileToReferenceBitmap(
-                        imagePath,
-                        model,
-                        tW,
-                        tH,
-                        row,
-                        col,
-                        angle,
-                        refRow,
-                        refCol,
-                        refAngle,
-                        out Exception alignEx);
-                    if (aligned != null && alignEx == null)
+                    double row = r.Row[0].D;
+                    double col = r.Column[0].D;
+                    double angle = r.Angle[0].D;
+                    AppLogger.Write(
+                        "NCC",
+                        string.Format(
+                            CultureInfo.InvariantCulture,
+                            "AutoRun NCC: {0} row={1:0.00} col={2:0.00} ang={3:0.000} hasRef={4}",
+                            System.IO.Path.GetFileName(imagePath), row, col, angle, hasRefPose));
+
+                    if (hasRefPose && NccSharedModelState.AlignImagesEnabled)
                     {
-                        _viewer.CanvasControl.SetImage(aligned, imagePath);
-                        row = refRow;
-                        col = refCol;
-                        AppLogger.Write("ALIGN", "AutoRun applied alignment to viewer: " + System.IO.Path.GetFileName(imagePath));
+                        Bitmap aligned = NccImageAlignment.AlignImageFileToReferenceBitmap(
+                            imagePath,
+                            model,
+                            tW,
+                            tH,
+                            row,
+                            col,
+                            angle,
+                            refRow,
+                            refCol,
+                            refAngle,
+                            out Exception alignEx);
+                        if (aligned != null && alignEx == null)
+                        {
+                            _viewer.CanvasControl.SetImage(aligned, imagePath);
+                            row = refRow;
+                            col = refCol;
+                            AppLogger.Write("ALIGN", "AutoRun applied alignment to viewer: " + System.IO.Path.GetFileName(imagePath));
+                        }
+                        else
+                        {
+                            AppLogger.Write("ALIGN", "AutoRun alignment skipped: " + (alignEx != null ? alignEx.Message : "aligned=null"));
+                        }
+                    }
+
+                    var roi = _viewer.CanvasControl.SelectedRoi;
+                    if (roi == null && _viewer.CanvasControl.ROIItems != null && _viewer.CanvasControl.ROIItems.Count > 0)
+                        roi = _viewer.CanvasControl.ROIItems[0];
+
+                    if (roi == null)
+                    {
+                        Size sz = _viewer.CanvasControl.ImagePixelSize;
+                        int w = (int)System.Math.Round(tW > 0.1 ? tW : System.Math.Max(50, sz.Width * 0.25));
+                        int h = (int)System.Math.Round(tH > 0.1 ? tH : System.Math.Max(50, sz.Height * 0.25));
+                        int left = System.Math.Max(0, (int)System.Math.Round(col - (w / 2.0)));
+                        int top = System.Math.Max(0, (int)System.Math.Round(row - (h / 2.0)));
+                        var rect = new ImageViewerWinForms.ROIRectangle(new Rectangle(left, top, w, h), Color.LimeGreen, 2);
+                        _viewer.CanvasControl.AddROI(rect);
+                        _viewer.CanvasControl.SelectROIByName(rect.Name);
+                        roi = rect;
+                    }
+
+                    // 이동은 누적 오차를 줄이기 위해 "중심 기준 재설정" 우선
+                    if (roi is ImageViewerWinForms.ROIRectangle rr)
+                    {
+                        Rectangle b0 = rr.GetBounds();
+                        int w0 = b0.Width;
+                        int h0 = b0.Height;
+                        int w = (int)System.Math.Round(tW > 0.1 ? tW : w0);
+                        int h = (int)System.Math.Round(tH > 0.1 ? tH : h0);
+                        w = System.Math.Max(4, w);
+                        h = System.Math.Max(4, h);
+                        int left = System.Math.Max(0, (int)System.Math.Round(col - (w / 2.0)));
+                        int top = System.Math.Max(0, (int)System.Math.Round(row - (h / 2.0)));
+                        rr.Rect = new Rectangle(left, top, w, h);
+                        _viewer.CanvasControl.SelectROIByName(rr.Name);
                     }
                     else
                     {
-                        AppLogger.Write("ALIGN", "AutoRun alignment skipped: " + (alignEx != null ? alignEx.Message : "aligned=null"));
+                        Rectangle b = roi.GetBounds();
+                        double cx = b.Left + (b.Width / 2.0);
+                        double cy = b.Top + (b.Height / 2.0);
+                        int dx = (int)System.Math.Round(col - cx);
+                        int dy = (int)System.Math.Round(row - cy);
+                        if (dx != 0 || dy != 0)
+                            roi.Move(dx, dy);
+                        _viewer.CanvasControl.SelectROIByName(roi.Name);
                     }
+
+                    _viewer.CanvasControl.Invalidate();
+                    return null;
                 }
-
-                var roi = _viewer.CanvasControl.SelectedRoi;
-                if (roi == null && _viewer.CanvasControl.ROIItems != null && _viewer.CanvasControl.ROIItems.Count > 0)
-                    roi = _viewer.CanvasControl.ROIItems[0];
-
-                if (roi == null)
+                finally
                 {
-                    Size sz = _viewer.CanvasControl.ImagePixelSize;
-                    int w = (int)System.Math.Round(tW > 0.1 ? tW : System.Math.Max(50, sz.Width * 0.25));
-                    int h = (int)System.Math.Round(tH > 0.1 ? tH : System.Math.Max(50, sz.Height * 0.25));
-                    int left = System.Math.Max(0, (int)System.Math.Round(col - (w / 2.0)));
-                    int top = System.Math.Max(0, (int)System.Math.Round(row - (h / 2.0)));
-                    var rect = new ImageViewerWinForms.ROIRectangle(new Rectangle(left, top, w, h), Color.LimeGreen, 2);
-                    _viewer.CanvasControl.AddROI(rect);
-                    _viewer.CanvasControl.SelectROIByName(rect.Name);
-                    roi = rect;
+                    NccSharedModelState.EndProgrammaticRoiUpdate();
                 }
-
-                // 이동은 누적 오차를 줄이기 위해 "중심 기준 재설정" 우선
-                if (roi is ImageViewerWinForms.ROIRectangle rr)
-                {
-                    Rectangle b0 = rr.GetBounds();
-                    int w0 = b0.Width;
-                    int h0 = b0.Height;
-                    int w = (int)System.Math.Round(tW > 0.1 ? tW : w0);
-                    int h = (int)System.Math.Round(tH > 0.1 ? tH : h0);
-                    w = System.Math.Max(4, w);
-                    h = System.Math.Max(4, h);
-                    int left = System.Math.Max(0, (int)System.Math.Round(col - (w / 2.0)));
-                    int top = System.Math.Max(0, (int)System.Math.Round(row - (h / 2.0)));
-                    rr.Rect = new Rectangle(left, top, w, h);
-                    _viewer.CanvasControl.SelectROIByName(rr.Name);
-                }
-                else
-                {
-                    Rectangle b = roi.GetBounds();
-                    double cx = b.Left + (b.Width / 2.0);
-                    double cy = b.Top + (b.Height / 2.0);
-                    int dx = (int)System.Math.Round(col - cx);
-                    int dy = (int)System.Math.Round(row - cy);
-                    if (dx != 0 || dy != 0)
-                        roi.Move(dx, dy);
-                    _viewer.CanvasControl.SelectROIByName(roi.Name);
-                }
-
-                _viewer.CanvasControl.Invalidate();
-                return null;
             }
             catch (Exception ex)
             {
@@ -948,7 +1023,8 @@ namespace InspectionProgram.GUI
             AppExceptionHandler.ExecuteBestEffort("UcAutoRunShell.CameraTabChanged", () =>
             {
                 int idx = tabCamera.SelectedIndex < 0 ? 0 : tabCamera.SelectedIndex;
-                lblCurrentDeviceValue.Text = "CAM " + (idx + 1).ToString("00");
+                lblCurrentDeviceValue.Text =
+                    LocalizationService.GetText("Camera", _currentLanguage) + " " + (idx + 1).ToString("00", CultureInfo.InvariantCulture);
             });
         }
 

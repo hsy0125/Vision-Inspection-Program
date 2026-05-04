@@ -230,6 +230,7 @@ namespace InspectionProgram.GUI
         {
             try
             {
+                Text = LocalizationService.GetText("AppWindowTitle", _currentLanguage);
                 btnModeAutoRun.Text = LocalizationService.GetText("AutoRun", _currentLanguage);
                 btnModeTeaching.Text = LocalizationService.GetText("Teaching", _currentLanguage);
                 btnModeOption.Text = LocalizationService.GetText("Option", _currentLanguage);
@@ -299,11 +300,12 @@ namespace InspectionProgram.GUI
 
                 if (mode == VisionModeType.AutoRun)
                 {
-                    SetToolbarButton(btnMenu1, "Run");
-                    SetToolbarButton(btnMenu2, "History");
-                    SetToolbarButton(btnMenu3, "Inspection");
-                    SetToolbarButton(btnMenu4, "Count");
-                    SetToolbarButton(btnMenu5, "Log");
+                    // 상단 «실행(Run)»는 기능 미연결 상태였음 → 제거하고 검사/개수/로그만 표시
+                    SetToolbarButton(btnMenu1, "Inspection");
+                    SetToolbarButton(btnMenu2, "Count");
+                    SetToolbarButton(btnMenu3, "Log");
+                    SetToolbarButton(btnMenu4, string.Empty);
+                    SetToolbarButton(btnMenu5, string.Empty);
                 }
                 else if (mode == VisionModeType.Teaching)
                 {
@@ -441,7 +443,11 @@ namespace InspectionProgram.GUI
                 }
                 else if (actionKey == "Help")
                 {
-                    MessageBox.Show("Docking UI sample help.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(
+                        LocalizationService.GetText("HelpDockingSample", _currentLanguage),
+                        Text,
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
                 }
                 else if (actionKey == "Inspection")
                 {

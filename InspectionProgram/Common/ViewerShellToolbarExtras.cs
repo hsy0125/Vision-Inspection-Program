@@ -38,6 +38,45 @@ namespace InspectionProgram.Common
             return buttons;
         }
 
+        public static void ApplyToolbarLanguage(FlowLayoutPanel flp, LanguageType language)
+        {
+            if (flp?.Controls == null)
+                return;
+            foreach (Control c in flp.Controls)
+            {
+                Button b = c as Button;
+                if (b == null)
+                    continue;
+                string tag = b.Tag as string;
+                if (string.IsNullOrEmpty(tag))
+                    continue;
+                switch (tag)
+                {
+                    case "FIT":
+                        b.Text = LocalizationService.GetText("FitImage", language);
+                        break;
+                    case "CLR_OVR":
+                        b.Text = LocalizationService.GetText("OvClrShort", language);
+                        break;
+                    case "CROSS":
+                        b.Text = LocalizationService.GetText("Cross", language);
+                        break;
+                    case "GRAY":
+                        b.Text = LocalizationService.GetText("Gray", language);
+                        break;
+                    case "AVG":
+                        b.Text = LocalizationService.GetText("Average", language);
+                        break;
+                    case "SYNC":
+                        b.Text = LocalizationService.GetText("SyncShort", language);
+                        break;
+                    case "MAP":
+                        b.Text = LocalizationService.GetText("MapShort", language);
+                        break;
+                }
+            }
+        }
+
         public static void RefreshToggleButtonColors(ImageViewPanelView1 viewer, FlowLayoutPanel flp)
         {
             if (viewer?.CanvasControl == null || flp == null)
