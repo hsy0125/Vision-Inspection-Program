@@ -12,6 +12,7 @@ Teaching Page 에서의 패턴 검사(NCC 알고리즘)
 <img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/3bddead5-b17b-4a9f-b0fc-fe0684b05b73" />
 
 --- 
+
 ### 블랍 count
 Teaching Page 에서의 Blob 검사 (count, Matching)
 <img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/447d11aa-48ca-4b6a-b274-4d3724603dda" />
@@ -24,10 +25,12 @@ Teaching Page 에서의 Blob 검사 (count, Matching)
 <img width="767" height="360" alt="image" src="https://github.com/user-attachments/assets/1d6bf897-2ff0-49e6-a7a7-ceb7cdc2b5d6" />
 
 ---
+
 ### Log(검사 로그) / CSV (파라미터 값 저장)
 <img width="418" height="327" alt="image" src="https://github.com/user-attachments/assets/d2e84764-f53f-4990-976c-cfce185e4f8b" />
 
 ---
+
 ## 0. 한 문장 요약
 `InspectionProgram`은 **Teaching(티칭)**에서 “검사 기준(ROI/임계값/NCC 모델)”을 만들고 저장한 뒤, **Auto Run(자동 실행)**에서 그 기준을 적용해 이미지(단일/폴더)를 검사하여 **OK/NG** 판정 및 **CSV/로그**를 저장하는 **WinForms 기반 비전 검사 프로그램**이다.
 <img width="424" height="840" alt="image" src="https://github.com/user-attachments/assets/a4495f3e-6a45-4750-8614-272104f6151e" />
