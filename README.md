@@ -1,24 +1,32 @@
-<img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/13284adc-5dd2-4019-a4a4-0a9f1a5b7718" />
-<img width="1920" height="1032" alt="image" src="https://github.com/user-attachments/assets/cfc6dc79-6d63-449d-a90b-127f35486ab3" />
+### Auto Run Page
+<img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/dd9992d4-3780-48e8-806e-5a9e987ad88f" />
+### Teaching Page
+<img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/056a60fd-7c95-4b46-a641-f062bbe88a53" />
+#### Image load
+<img width="1920" height="1032" alt="image" src="https://github.com/user-attachments/assets/5d88318d-6d25-4be6-927e-3f482131381d" />
+--- 
+### 패턴 검사
+Teaching Page 에서의 패턴 검사(NCC 알고리즘)
+<img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/fdfc7324-1856-46c8-8543-86c58cf93fa2" />
+레시피 저장 후 Auto Run Page 에서의 검사 
+<img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/3bddead5-b17b-4a9f-b0fc-fe0684b05b73" />
 
-<img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/71d663ef-9dc7-4006-a887-0831ef0f3200" />
-
-패턴 검사
-<img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/1f8bf723-ea23-45a2-a754-295e940849da" />
-패턴 검사 저장
-<img width="1920" height="1032" alt="image" src="https://github.com/user-attachments/assets/b14321b5-69f5-4ab1-b803-5030627b4db1" />
-같은 이미지 불러옴 
-<img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/a5a315ba-bcb2-4eef-ae6e-9fa394fda3e8" />
-검사 시작 - 사이클
-<img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/94d37791-97cc-4635-a0d9-282ac1577f25" />
-
-카운트
-<img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/cdd643da-6a64-4cf5-a373-5661d4b103ef" />
-
-<img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/56ea5fe5-e38c-4c65-bff1-7b96ca8a71bc" />
+--- 
+### 블랍 count
+Teaching Page 에서의 Blob 검사 (count, Matching)
+<img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/447d11aa-48ca-4b6a-b274-4d3724603dda" />
+이미지를 사이클로 돌려서 실시간으로 blob 탐지하는 것 시연
+<img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/285cd181-de81-41b3-98f8-829e31bbc280" />
 
 ---
+### 다국어 변환 
+<img width="767" height="360" alt="image" src="https://github.com/user-attachments/assets/1d6bf897-2ff0-49e6-a7a7-ceb7cdc2b5d6" />
 
+---
+### Log(검사 로그) / CSV (파라미터 값 저장)
+<img width="418" height="327" alt="image" src="https://github.com/user-attachments/assets/d2e84764-f53f-4990-976c-cfce185e4f8b" />
+
+---
 ## 0. 한 문장 요약
 `InspectionProgram`은 **Teaching(티칭)**에서 “검사 기준(ROI/임계값/NCC 모델)”을 만들고 저장한 뒤, **Auto Run(자동 실행)**에서 그 기준을 적용해 이미지(단일/폴더)를 검사하여 **OK/NG** 판정 및 **CSV/로그**를 저장하는 **WinForms 기반 비전 검사 프로그램**이다.
 <img width="424" height="840" alt="image" src="https://github.com/user-attachments/assets/a4495f3e-6a45-4750-8614-272104f6151e" />
