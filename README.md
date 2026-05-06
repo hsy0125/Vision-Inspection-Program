@@ -10,7 +10,7 @@ Teaching Page 에서의 패턴 검사(NCC 알고리즘)
 <img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/fdfc7324-1856-46c8-8543-86c58cf93fa2" />
 레시피 저장 후 Auto Run Page 에서의 검사 
 <img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/3bddead5-b17b-4a9f-b0fc-fe0684b05b73" />
-
+---
 --- 
 ### 블랍 count
 Teaching Page 에서의 Blob 검사 (count, Matching)
