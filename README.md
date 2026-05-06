@@ -4,13 +4,13 @@
 <img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/056a60fd-7c95-4b46-a641-f062bbe88a53" />
 ### Image load
 <img width="1920" height="1032" alt="image" src="https://github.com/user-attachments/assets/5d88318d-6d25-4be6-927e-3f482131381d" />
---- 
+
 ### 패턴 검사
 Teaching Page 에서의 패턴 검사(NCC 알고리즘)
 <img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/fdfc7324-1856-46c8-8543-86c58cf93fa2" />
 레시피 저장 후 Auto Run Page 에서의 검사 
 <img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/3bddead5-b17b-4a9f-b0fc-fe0684b05b73" />
----
+
 --- 
 ### 블랍 count
 Teaching Page 에서의 Blob 검사 (count, Matching)
@@ -19,6 +19,7 @@ Teaching Page 에서의 Blob 검사 (count, Matching)
 <img width="1913" height="1032" alt="image" src="https://github.com/user-attachments/assets/285cd181-de81-41b3-98f8-829e31bbc280" />
 
 ---
+
 ### 다국어 변환 
 <img width="767" height="360" alt="image" src="https://github.com/user-attachments/assets/1d6bf897-2ff0-49e6-a7a7-ceb7cdc2b5d6" />
 
